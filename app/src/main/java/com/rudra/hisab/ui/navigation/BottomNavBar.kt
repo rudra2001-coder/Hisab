@@ -3,9 +3,9 @@ package com.rudra.hisab.ui.navigation
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Inventory2
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Sell
+import androidx.compose.material.icons.filled.PointOfSale
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -23,8 +23,8 @@ data class NavItem(
 
 val bottomNavItems = listOf(
     NavItem(Routes.DASHBOARD, "Dashboard", Icons.Default.Home),
-    NavItem(Routes.INVENTORY, "Stock", Icons.Default.Inventory2),
-    NavItem(Routes.SALE, "Sale", Icons.Default.Sell),
+    NavItem(Routes.INVENTORY, "Stock", Icons.Default.Inventory),
+    NavItem(Routes.SALE, "Sale", Icons.Default.PointOfSale),
     NavItem(Routes.CUSTOMERS, "Customers", Icons.Default.People),
     NavItem(Routes.SETTINGS, "More", Icons.Default.Description)
 )
