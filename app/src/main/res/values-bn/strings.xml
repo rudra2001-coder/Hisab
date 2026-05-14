@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">হিসাব</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">ড্যাশবোর্ড</string>
+    <string name="nav_inventory">মজুদ</string>
+    <string name="nav_sale">বিক্রয়</string>
+    <string name="nav_customers">গ্রাহক</string>
+    <string name="nav_more">আরও</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_title">হিসাব</string>
+    <string name="onboarding_subtitle">আপনার দোকানের হিসাব রাখুন সহজে</string>
+    <string name="onboarding_shop_name">আপনার দোকানের নাম লিখুন</string>
+    <string name="onboarding_shop_name_hint">যেমন: রহিম স্টোর</string>
+    <string name="onboarding_category">আপনার দোকানের ধরন নির্বাচন করুন</string>
+    <string name="onboarding_category_desc">আমরা আপনার জন্য কিছু পণ্য তৈরি করে দেব</string>
+    <string name="onboarding_ready">সবকিছু প্রস্তুত!</string>
+    <string name="onboarding_ready_desc">আপনার দোকানের জন্য স্টার্টার পণ্য তৈরি করা হবে। আপনি পরে সেগুলো পরিবর্তন করতে পারবেন।</string>
+    <string name="btn_next">পরবর্তী</string>
+    <string name="btn_back">পিছনে</string>
+    <string name="btn_start">শুরু করুন</string>
+
+    <!-- Dashboard -->
+    <string name="today_sales">আজকের বিক্রয়</string>
+    <string name="today_expenses">আজকের খরচ</string>
+    <string name="net_profit">নিট মুনাফা</string>
+    <string name="total_dues">মোট বাকি</string>
+    <string name="low_stock_alerts">স্টক সতর্কতা</string>
+    <string name="new_sale">নতুন বিক্রয়</string>
+    <string name="add_stock">স্টক যোগ</string>
+    <string name="add_expense">খরচ যোগ</string>
+    <string name="view_dues">বাকি দেখুন</string>
+
+    <!-- Common -->
+    <string name="save">সংরক্ষণ</string>
+    <string name="cancel">বাতিল</string>
+    <string name="delete">মুছুন</string>
+    <string name="edit">সম্পাদনা</string>
+    <string name="search">অনুসন্ধান</string>
+    <string name="confirm">নিশ্চিত</string>
+    <string name="retry">পুনরায় চেষ্টা</string>
+    <string name="no_data">কোনো তথ্য নেই</string>
+    <string name="loading">লোড হচ্ছে…</string>
+    <string name="error_occurred">একটি ত্রুটি হয়েছে</string>
+    <string name="amount">পরিমাণ</string>
+    <string name="note">নোট</string>
+    <string name="date">তারিখ</string>
+    <string name="category">বিভাগ</string>
+    <string name="quantity">পরিমাণ</string>
+    <string name="unit_price">একক মূল্য</string>
+    <string name="total">মোট</string>
+    <string name="paid">পরিশোধিত</string>
+    <string name="due">বাকি</string>
+    <string name="profit">মুনাফা</string>
+
+    <!-- Settings -->
+    <string name="settings">সেটিংস</string>
+    <string name="language">ভাষা</string>
+    <string name="bangla">বাংলা</string>
+    <string name="english">English</string>
+    <string name="pin_setup">পিন সেটআপ</string>
+    <string name="biometric_lock">বায়োমেট্রিক লক</string>
+    <string name="shop_info">দোকানের তথ্য</string>
+    <string name="about">সম্পর্কে</string>
+    <string name="version">সংস্করণ</string>
+
+    <!-- Expenses -->
+    <string name="expenses">খরচ</string>
+    <string name="add_expense_title">খরচ যোগ</string>
+    <string name="expense_transport">পরিবহন</string>
+    <string name="expense_labor">শ্রমিক</string>
+    <string name="expense_rent">ভাড়া</string>
+    <string name="expense_utility">ইউটিলিটি</string>
+    <string name="expense_purchase">পণ্য ক্রয়</string>
+    <string name="expense_other">অন্যান্য</string>
+</resources>
