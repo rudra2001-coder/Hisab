@@ -20,9 +20,14 @@ class CustomerRepository @Inject constructor(
     fun searchCustomers(query: String): Flow<List<CustomerEntity>> =
         customerDao.searchCustomers(query)
 
+    fun getDueCustomers(): Flow<List<CustomerEntity>> = customerDao.getDueCustomers()
+
     fun getDueCustomerCount(): Flow<Int> = customerDao.getDueCustomerCount()
 
     fun getTotalDues(): Flow<Double?> = customerDao.getTotalDues()
+
+    fun getCustomersOverCreditLimit(): Flow<List<CustomerEntity>> =
+        customerDao.getCustomersOverCreditLimit()
 
     suspend fun insert(customer: CustomerEntity): Long = customerDao.insert(customer)
 

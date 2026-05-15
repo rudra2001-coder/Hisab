@@ -95,6 +95,10 @@ dependencies {
     // Accompanist
     implementation(libs.accompanist.swiperefresh)
 
+    // Apache POI – Excel export
+    implementation(libs.apache.poi)
+    implementation(libs.apache.poi.ooxml)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

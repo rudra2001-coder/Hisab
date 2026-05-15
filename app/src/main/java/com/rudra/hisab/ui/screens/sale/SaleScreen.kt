@@ -42,7 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.rudra.hisab.data.local.entity.PaymentType
+import com.rudra.hisab.data.local.entity.PaymentStatus
 import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.OrangeDue
@@ -275,16 +275,16 @@ private fun SaleForm(
         Text("পরিশোধের ধরন", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            PaymentType.entries.forEach { type ->
+            PaymentStatus.entries.forEach { type ->
                 FilterChip(
                     selected = state.paymentType == type,
                     onClick = { onPaymentTypeChange(type) },
                     label = {
                         Text(
                             when (type) {
-                                PaymentType.CASH -> "নগদ"
-                                PaymentType.CREDIT -> "বাকি"
-                                PaymentType.PARTIAL -> "আংশিক"
+                                PaymentStatus.CASH -> "নগদ"
+                                PaymentStatus.CREDIT -> "বাকি"
+                                PaymentStatus.PARTIAL -> "আংশিক"
                             }
                         )
                     },
@@ -295,7 +295,7 @@ private fun SaleForm(
             }
         }
 
-        if (state.paymentType == PaymentType.PARTIAL) {
+        if (state.paymentType == PaymentStatus.PARTIAL) {
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
                 value = state.paidAmount,

@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rudra.hisab.data.local.entity.CustomerEntity
-import com.rudra.hisab.data.local.entity.PaymentType
+import com.rudra.hisab.data.local.entity.PaymentStatus
 import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
@@ -25,7 +25,7 @@ data class SaleState(
     val customers: List<CustomerEntity> = emptyList(),
     val selectedProduct: ProductEntity? = null,
     val quantity: String = "1",
-    val paymentType: PaymentType = PaymentType.CASH,
+    val paymentType: PaymentStatus = PaymentStatus.CASH,
     val paidAmount: String = "",
     val selectedCustomerId: Long? = null,
     val isSaving: Boolean = false,
@@ -84,7 +84,7 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    fun setPaymentType(type: PaymentType) {
+    fun setPaymentType(type: PaymentStatus) {
         _state.value = _state.value.copy(paymentType = type)
     }
 
@@ -105,7 +105,7 @@ class SaleViewModel @Inject constructor(
             selectedProduct = null,
             quantity = "1",
             paidAmount = "",
-            paymentType = PaymentType.CASH,
+            paymentType = PaymentStatus.CASH,
             selectedCustomerId = null,
             saleComplete = false
         )
@@ -119,9 +119,9 @@ class SaleViewModel @Inject constructor(
 
         val totalAmount = product.sellPrice * qty
         val paidAmount = when (s.paymentType) {
-            PaymentType.CASH -> totalAmount
-            PaymentType.CREDIT -> 0.0
-            PaymentType.PARTIAL -> s.paidAmount.toDoubleOrNull() ?: 0.0
+            PaymentStatus.CASH -> totalAmount
+            PaymentStatus.CREDIT -> 0.0
+            PaymentStatus.PARTIAL -> s.paidAmount.toDoubleOrNull() ?: 0.0
         }
 
         viewModelScope.launch {
@@ -142,7 +142,7 @@ class SaleViewModel @Inject constructor(
                 )
             )
 
-            if (s.selectedCustomerId != null && s.paymentType != PaymentType.CASH) {
+            if (s.selectedCustomerId != null && s.paymentType != PaymentStatus.CASH) {
                 val dueAmount = totalAmount - paidAmount
                 customerRepository.addDue(s.selectedCustomerId, dueAmount)
                 customerRepository.updateLastTransaction(s.selectedCustomerId, System.currentTimeMillis())

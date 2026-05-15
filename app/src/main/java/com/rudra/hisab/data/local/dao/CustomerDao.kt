@@ -23,11 +23,17 @@ interface CustomerDao {
     @Query("SELECT * FROM customers WHERE (name LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%') AND isDeleted = 0")
     fun searchCustomers(query: String): Flow<List<CustomerEntity>>
 
-    @Query("SELECT COUNT(*) FROM customers WHERE totalDue > 0")
+    @Query("SELECT * FROM customers WHERE totalDue > 0 AND isDeleted = 0 ORDER BY totalDue DESC")
+    fun getDueCustomers(): Flow<List<CustomerEntity>>
+
+    @Query("SELECT COUNT(*) FROM customers WHERE totalDue > 0 AND isDeleted = 0")
     fun getDueCustomerCount(): Flow<Int>
 
-    @Query("SELECT SUM(totalDue) FROM customers")
+    @Query("SELECT SUM(totalDue) FROM customers WHERE isDeleted = 0")
     fun getTotalDues(): Flow<Double?>
+
+    @Query("SELECT * FROM customers WHERE creditLimit > 0 AND totalDue > creditLimit AND isDeleted = 0")
+    fun getCustomersOverCreditLimit(): Flow<List<CustomerEntity>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(customer: CustomerEntity): Long

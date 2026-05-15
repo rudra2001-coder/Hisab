@@ -39,6 +39,8 @@ import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.ui.navigation.BottomNavBar
 import com.rudra.hisab.ui.navigation.Routes
 import com.rudra.hisab.ui.navigation.allNavItems
+import com.rudra.hisab.ui.screens.accounting.AccountingScreen
+import com.rudra.hisab.ui.screens.accounting.AccountingViewModel
 import com.rudra.hisab.ui.screens.analytics.AnalyticsScreen
 import com.rudra.hisab.ui.screens.analytics.AnalyticsViewModel
 import com.rudra.hisab.ui.screens.customer.CustomerDetailScreen
@@ -50,12 +52,16 @@ import com.rudra.hisab.ui.screens.dashboard.DashboardScreen
 import com.rudra.hisab.ui.screens.dashboard.DashboardViewModel
 import com.rudra.hisab.ui.screens.expense.ExpenseScreen
 import com.rudra.hisab.ui.screens.expense.ExpenseViewModel
+import com.rudra.hisab.ui.screens.export.ExportScreen
+import com.rudra.hisab.ui.screens.export.ExportViewModel
 import com.rudra.hisab.ui.screens.inventory.InventoryScreen
 import com.rudra.hisab.ui.screens.inventory.InventoryViewModel
 import com.rudra.hisab.ui.screens.lock.LockScreen
 import com.rudra.hisab.ui.screens.more.MoreScreen
 import com.rudra.hisab.ui.screens.onboarding.OnboardingScreen
 import com.rudra.hisab.ui.screens.onboarding.OnboardingViewModel
+import com.rudra.hisab.ui.screens.reports.ReportsScreen
+import com.rudra.hisab.ui.screens.reports.ReportsViewModel
 import com.rudra.hisab.ui.screens.sale.QuickSaleScreen
 import com.rudra.hisab.ui.screens.sale.QuickSaleViewModel
 import com.rudra.hisab.ui.screens.settings.SettingsScreen
@@ -318,8 +324,51 @@ class MainActivity : FragmentActivity() {
                                     AnalyticsScreen(viewModel = viewModel)
                                 }
 
+                                composable(Routes.ACCOUNTING) {
+                                    val viewModel: AccountingViewModel = hiltViewModel()
+                                    AccountingScreen(viewModel = viewModel)
+                                }
+
+                                composable(Routes.REPORTS) {
+                                    val viewModel: ReportsViewModel = hiltViewModel()
+                                    ReportsScreen(viewModel = viewModel)
+                                }
+
+                                composable(Routes.EXPORT) {
+                                    val viewModel: ExportViewModel = hiltViewModel()
+                                    ExportScreen(viewModel = viewModel)
+                                }
+
                                 composable(Routes.MORE) {
                                     MoreScreen(
+                                        onNavigateToDashboard = {
+                                            navController.navigate(Routes.DASHBOARD) {
+                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        onNavigateToInventory = {
+                                            navController.navigate(Routes.INVENTORY) {
+                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        onNavigateToSale = {
+                                            navController.navigate(Routes.SALE) {
+                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        onNavigateToCustomers = {
+                                            navController.navigate(Routes.CUSTOMERS) {
+                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
                                         onNavigateToExpenses = {
                                             navController.navigate(Routes.EXPENSES)
                                         },

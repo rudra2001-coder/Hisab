@@ -15,12 +15,21 @@ class ProductRepository @Inject constructor(
     fun getProductsByCategory(categoryId: Long): Flow<List<ProductEntity>> =
         productDao.getProductsByCategory(categoryId)
 
+    fun getProductsBySupplier(supplierId: Long): Flow<List<ProductEntity>> =
+        productDao.getProductsBySupplier(supplierId)
+
     suspend fun getProductById(id: Long): ProductEntity? = productDao.getProductById(id)
+
+    suspend fun getProductByBarcode(barcode: String): ProductEntity? =
+        productDao.getProductByBarcode(barcode)
 
     fun getLowStockProducts(): Flow<List<ProductEntity>> = productDao.getLowStockProducts()
     suspend fun getLowStockProductsOnce(): List<ProductEntity> = productDao.getLowStockProductsOnce()
 
     fun searchProducts(query: String): Flow<List<ProductEntity>> = productDao.searchProducts(query)
+
+    fun getExpiringProducts(threshold: Long): Flow<List<ProductEntity>> =
+        productDao.getExpiringProducts(threshold)
 
     fun getProductCount(): Flow<Int> = productDao.getProductCount()
 

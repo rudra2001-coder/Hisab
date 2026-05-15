@@ -85,7 +85,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rudra.hisab.data.local.entity.CustomerEntity
-import com.rudra.hisab.data.local.entity.PaymentType
+import com.rudra.hisab.data.local.entity.PaymentStatus
 import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.ui.theme.BlueInfo
@@ -585,7 +585,7 @@ private fun SaleTabContent(
         onChange = onPaymentTypeChange
     )
 
-    if (state.paymentType == PaymentType.PARTIAL) {
+    if (state.paymentType == PaymentStatus.PARTIAL) {
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = state.paidAmount,
@@ -841,7 +841,7 @@ private fun CartBottomSheetContent(
                 onChange = onPaymentTypeChange
             )
 
-            if (state.paymentType == PaymentType.PARTIAL) {
+            if (state.paymentType == PaymentStatus.PARTIAL) {
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.paidAmount,
@@ -1050,8 +1050,8 @@ private fun NumberPad(
 
 @Composable
 private fun PaymentTypeSelector(
-    selected: PaymentType,
-    onChange: (PaymentType) -> Unit
+    selected: PaymentStatus,
+    onChange: (PaymentStatus) -> Unit
 ) {
     Column {
         Text(
@@ -1066,26 +1066,26 @@ private fun PaymentTypeSelector(
         ) {
             PaymentTypeButton(
                 label = "নগদ",
-                selected = selected == PaymentType.CASH,
+                selected = selected == PaymentStatus.CASH,
                 color = GreenProfit,
                 containerColor = GreenProfitContainer,
-                onClick = { onChange(PaymentType.CASH) },
+                onClick = { onChange(PaymentStatus.CASH) },
                 modifier = Modifier.weight(1f)
             )
             PaymentTypeButton(
                 label = "বাকি",
-                selected = selected == PaymentType.CREDIT,
+                selected = selected == PaymentStatus.CREDIT,
                 color = OrangeDue,
                 containerColor = OrangeDue.copy(alpha = 0.15f),
-                onClick = { onChange(PaymentType.CREDIT) },
+                onClick = { onChange(PaymentStatus.CREDIT) },
                 modifier = Modifier.weight(1f)
             )
             PaymentTypeButton(
                 label = "আংশিক",
-                selected = selected == PaymentType.PARTIAL,
+                selected = selected == PaymentStatus.PARTIAL,
                 color = BlueInfo,
                 containerColor = BlueInfoContainer,
-                onClick = { onChange(PaymentType.PARTIAL) },
+                onClick = { onChange(PaymentStatus.PARTIAL) },
                 modifier = Modifier.weight(1f)
             )
         }

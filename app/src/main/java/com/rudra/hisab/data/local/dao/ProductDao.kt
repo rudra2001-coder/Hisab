@@ -17,8 +17,14 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE categoryId = :categoryId AND isDeleted = 0 ORDER BY name ASC")
     fun getProductsByCategory(categoryId: Long): Flow<List<ProductEntity>>
 
+    @Query("SELECT * FROM products WHERE supplierId = :supplierId AND isDeleted = 0 ORDER BY name ASC")
+    fun getProductsBySupplier(supplierId: Long): Flow<List<ProductEntity>>
+
     @Query("SELECT * FROM products WHERE id = :id AND isDeleted = 0")
     suspend fun getProductById(id: Long): ProductEntity?
+
+    @Query("SELECT * FROM products WHERE barcode = :barcode AND isDeleted = 0 LIMIT 1")
+    suspend fun getProductByBarcode(barcode: String): ProductEntity?
 
     @Query("SELECT * FROM products WHERE currentStock <= lowStockThreshold AND isDeleted = 0 ORDER BY currentStock ASC")
     fun getLowStockProducts(): Flow<List<ProductEntity>>
@@ -26,13 +32,16 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE currentStock <= lowStockThreshold AND isDeleted = 0 ORDER BY currentStock ASC")
     suspend fun getLowStockProductsOnce(): List<ProductEntity>
 
-    @Query("SELECT * FROM products WHERE (name LIKE '%' || :query || '%' OR nameBangla LIKE '%' || :query || '%') AND isDeleted = 0")
+    @Query("SELECT * FROM products WHERE (name LIKE '%' || :query || '%' OR nameBangla LIKE '%' || :query || '%' OR barcode LIKE '%' || :query || '%') AND isDeleted = 0")
     fun searchProducts(query: String): Flow<List<ProductEntity>>
 
-    @Query("SELECT COUNT(*) FROM products")
+    @Query("SELECT * FROM products WHERE expiryDate IS NOT NULL AND expiryDate <= :threshold AND isDeleted = 0 ORDER BY expiryDate ASC")
+    fun getExpiringProducts(threshold: Long): Flow<List<ProductEntity>>
+
+    @Query("SELECT COUNT(*) FROM products WHERE isDeleted = 0")
     fun getProductCount(): Flow<Int>
 
-    @Query("SELECT SUM(currentStock * buyPrice) FROM products")
+    @Query("SELECT SUM(currentStock * buyPrice) FROM products WHERE isDeleted = 0")
     fun getTotalStockValue(): Flow<Double?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

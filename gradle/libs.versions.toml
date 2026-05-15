@@ -17,6 +17,7 @@ work = "2.9.1"
 biometric = "1.1.0"
 vico = "2.0.0-beta.2"
 lottie = "6.4.0"
+poi = "5.2.5"
 appcompat = "1.7.0"
 fragmentKtx = "1.8.5"
 accompanist = "0.36.0"
@@ -78,6 +79,10 @@ vico-compose-m3 = { group = "com.patrykandpatrick.vico", name = "compose-m3", ve
 
 # Lottie
 lottie-compose = { group = "com.airbnb.android", name = "lottie-compose", version.ref = "lottie" }
+
+# Apache POI
+apache-poi = { group = "org.apache.poi", name = "poi", version.ref = "poi" }
+apache-poi-ooxml = { group = "org.apache.poi", name = "poi-ooxml", version.ref = "poi" }
 
 # Accompanist
 accompanist-swiperefresh = { group = "com.google.accompanist", name = "accompanist-swiperefresh", version.ref = "accompanist" }

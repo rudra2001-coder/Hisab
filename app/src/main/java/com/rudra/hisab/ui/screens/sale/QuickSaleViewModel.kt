@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import com.rudra.hisab.data.local.HisabDatabase
 import com.rudra.hisab.data.local.entity.CustomerEntity
-import com.rudra.hisab.data.local.entity.PaymentType
+import com.rudra.hisab.data.local.entity.PaymentStatus
 import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
@@ -38,7 +38,7 @@ data class QuickSaleState(
     val recentCustomers: List<CustomerEntity> = emptyList(),
     val selectedProduct: ProductEntity? = null,
     val quantity: String = "1",
-    val paymentType: PaymentType = PaymentType.CASH,
+    val paymentType: PaymentStatus = PaymentStatus.CASH,
     val paidAmount: String = "",
     val selectedCustomer: CustomerEntity? = null,
     val customerSearchQuery: String = "",
@@ -64,9 +64,9 @@ data class QuickSaleState(
         return (p.sellPrice - p.buyPrice) * quantityDouble
     }
     val dueAmount: Double get() = when (paymentType) {
-        PaymentType.CASH -> 0.0
-        PaymentType.CREDIT -> totalPrice
-        PaymentType.PARTIAL -> {
+        PaymentStatus.CASH -> 0.0
+        PaymentStatus.CREDIT -> totalPrice
+        PaymentStatus.PARTIAL -> {
             val paid = paidAmount.toDoubleOrNull() ?: 0.0
             (totalPrice - paid).coerceAtLeast(0.0)
         }
@@ -80,7 +80,7 @@ data class QuickSaleState(
             it.name.contains(customerSearchQuery, ignoreCase = true) ||
                     it.phone.contains(customerSearchQuery, ignoreCase = true)
         }
-    val isCustomerSelectionRequired: Boolean get() = paymentType != PaymentType.CASH
+    val isCustomerSelectionRequired: Boolean get() = paymentType != PaymentStatus.CASH
 
     fun isInCart(productId: Long): Boolean = cartItems.any { it.product.id == productId }
     fun getCartItem(productId: Long): CartItem? = cartItems.find { it.product.id == productId }
@@ -149,7 +149,7 @@ class QuickSaleViewModel @Inject constructor(
             selectedProduct = product,
             quantity = "1",
             paidAmount = "",
-            paymentType = PaymentType.CASH,
+            paymentType = PaymentStatus.CASH,
             selectedCustomer = null,
             customerSearchQuery = "",
             saleComplete = false,
@@ -200,7 +200,7 @@ class QuickSaleViewModel @Inject constructor(
             selectedProduct = null,
             quantity = "1",
             paidAmount = "",
-            paymentType = PaymentType.CASH,
+            paymentType = PaymentStatus.CASH,
             selectedCustomer = null,
             customerSearchQuery = "",
             saleComplete = false,
@@ -213,12 +213,12 @@ class QuickSaleViewModel @Inject constructor(
         _state.value = _state.value.copy(searchQuery = query)
     }
 
-    fun setPaymentType(type: PaymentType) {
+    fun setPaymentType(type: PaymentStatus) {
         val s = _state.value
         val newPaid = when (type) {
-            PaymentType.CASH -> s.totalPrice.toString()
-            PaymentType.CREDIT -> "0"
-            PaymentType.PARTIAL -> ""
+            PaymentStatus.CASH -> s.totalPrice.toString()
+            PaymentStatus.CREDIT -> "0"
+            PaymentStatus.PARTIAL -> ""
         }
         _state.value = _state.value.copy(
             paymentType = type,
@@ -329,9 +329,9 @@ class QuickSaleViewModel @Inject constructor(
 
         val totalAmount = s.totalPrice
         val paidAmount = when (s.paymentType) {
-            PaymentType.CASH -> totalAmount
-            PaymentType.CREDIT -> 0.0
-            PaymentType.PARTIAL -> s.paidAmount.toDoubleOrNull() ?: 0.0
+            PaymentStatus.CASH -> totalAmount
+            PaymentStatus.CREDIT -> 0.0
+            PaymentStatus.PARTIAL -> s.paidAmount.toDoubleOrNull() ?: 0.0
         }
 
         viewModelScope.launch {
@@ -351,7 +351,7 @@ class QuickSaleViewModel @Inject constructor(
                             paidAmount = paidAmount
                         )
                     )
-                    if (s.selectedCustomer != null && s.paymentType != PaymentType.CASH) {
+                    if (s.selectedCustomer != null && s.paymentType != PaymentStatus.CASH) {
                         val dueAmount = totalAmount - paidAmount
                         if (dueAmount > 0) {
                             customerRepository.addDue(s.selectedCustomer.id, dueAmount)
@@ -397,10 +397,10 @@ class QuickSaleViewModel @Inject constructor(
                                 quantity = item.quantity,
                                 unitPrice = item.product.sellPrice,
                                 totalAmount = item.totalPrice,
-                                paidAmount = if (s.paymentType == PaymentType.CASH) item.totalPrice else 0.0
+                                paidAmount = if (s.paymentType == PaymentStatus.CASH) item.totalPrice else 0.0
                             )
                         )
-                        if (s.paymentType != PaymentType.CASH) {
+                        if (s.paymentType != PaymentStatus.CASH) {
                             totalDue += item.totalPrice
                         }
                     }
@@ -435,7 +435,7 @@ class QuickSaleViewModel @Inject constructor(
                     if (t.productId != null) {
                         productRepository.addStock(t.productId, t.quantity)
                     }
-                    if (t.customerId != null && t.paymentType != PaymentType.CASH) {
+                    if (t.customerId != null && t.paymentType != PaymentStatus.CASH) {
                         val dueAmount = t.totalAmount - t.paidAmount
                         if (dueAmount > 0) {
                             customerRepository.removeDue(t.customerId, dueAmount)

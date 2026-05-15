@@ -5,22 +5,20 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "customers",
+    tableName = "suppliers",
     indices = [
         Index("phone", unique = true),
-        Index("totalDue"),
-        Index("creditLimit")
+        Index("name")
     ]
 )
-data class CustomerEntity(
+data class SupplierEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
     val phone: String = "",
     val address: String = "",
-    val email: String = "",
-    val creditLimit: Double = 0.0,   // 0 = unlimited
+    val companyName: String = "",
     val totalDue: Double = 0.0,
-    val lastTransactionAt: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
     val isDeleted: Boolean = false
 )

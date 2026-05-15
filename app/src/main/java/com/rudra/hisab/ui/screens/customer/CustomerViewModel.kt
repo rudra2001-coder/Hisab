@@ -5,7 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.room.withTransaction
 import com.rudra.hisab.data.local.HisabDatabase
 import com.rudra.hisab.data.local.entity.CustomerEntity
-import com.rudra.hisab.data.local.entity.PaymentType
+import com.rudra.hisab.data.local.entity.PaymentStatus
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
 import com.rudra.hisab.data.preferences.AppPreferences
@@ -181,7 +181,7 @@ class CustomerViewModel @Inject constructor(
         for (tx in chronological) {
             val change = when (tx.type) {
                 TransactionType.SALE -> {
-                    if (tx.paymentType == PaymentType.CASH) 0.0
+                    if (tx.paymentType == PaymentStatus.CASH) 0.0
                     else tx.totalAmount - tx.paidAmount
                 }
                 TransactionType.PAYMENT -> -tx.totalAmount
@@ -246,7 +246,7 @@ class CustomerViewModel @Inject constructor(
                     transactionRepository.insert(
                         TransactionEntity(
                             type = TransactionType.PAYMENT,
-                            paymentType = PaymentType.CASH,
+                            paymentType = PaymentStatus.CASH,
                             customerId = customer.id,
                             totalAmount = amount,
                             notes = s.paymentNote.ifBlank { "টাকা গ্রহণ" },
@@ -286,7 +286,7 @@ class CustomerViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 database.withTransaction {
-                    if (t.type == TransactionType.SALE && t.paymentType != PaymentType.CASH) {
+                    if (t.type == TransactionType.SALE && t.paymentType != PaymentStatus.CASH) {
                         val dueAmount = t.totalAmount - t.paidAmount
                         if (t.customerId != null && dueAmount > 0) {
                             customerRepository.removeDue(t.customerId, dueAmount)
