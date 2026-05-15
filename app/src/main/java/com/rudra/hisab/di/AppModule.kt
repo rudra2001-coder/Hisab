@@ -27,7 +27,7 @@ object AppModule {
             context,
             HisabDatabase::class.java,
             HisabDatabase.DATABASE_NAME
-        ).build()
+        ).fallbackToDestructiveMigration().build()
     }
 
     @Provides

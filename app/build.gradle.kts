@@ -79,6 +79,10 @@ dependencies {
     // WorkManager
     implementation(libs.work.runtime.ktx)
 
+    // AppCompat & Fragment
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.fragment.ktx)
+
     // Biometric
     implementation(libs.biometric)
 

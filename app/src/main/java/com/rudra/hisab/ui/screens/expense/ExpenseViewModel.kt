@@ -2,9 +2,13 @@ package com.rudra.hisab.ui.screens.expense
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rudra.hisab.data.local.HisabDatabase
 import com.rudra.hisab.data.local.entity.ExpenseCategory
 import com.rudra.hisab.data.local.entity.ExpenseEntity
+import com.rudra.hisab.data.local.entity.TransactionEntity
+import com.rudra.hisab.data.local.entity.TransactionType
 import com.rudra.hisab.data.repository.ExpenseRepository
+import com.rudra.hisab.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +31,9 @@ data class ExpenseState(
 
 @HiltViewModel
 class ExpenseViewModel @Inject constructor(
-    private val expenseRepository: ExpenseRepository
+    private val expenseRepository: ExpenseRepository,
+    private val transactionRepository: TransactionRepository,
+    private val database: HisabDatabase
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExpenseState())
@@ -85,15 +91,30 @@ class ExpenseViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isSaving = true)
-            expenseRepository.insert(
-                ExpenseEntity(
-                    categoryId = s.selectedCategory,
-                    amount = amount,
-                    description = s.description,
-                    date = System.currentTimeMillis()
-                )
-            )
-            _state.value = _state.value.copy(isSaving = false, showAddDialog = false)
+            try {
+                database.withTransaction {
+                    expenseRepository.insert(
+                        ExpenseEntity(
+                            categoryId = s.selectedCategory,
+                            amount = amount,
+                            description = s.description,
+                            date = System.currentTimeMillis()
+                        )
+                    )
+                    transactionRepository.insert(
+                        TransactionEntity(
+                            type = TransactionType.EXPENSE,
+                            quantity = 1.0,
+                            unitPrice = amount,
+                            totalAmount = amount,
+                            notes = s.description
+                        )
+                    )
+                }
+                _state.value = _state.value.copy(isSaving = false, showAddDialog = false)
+            } catch (_: Exception) {
+                _state.value = _state.value.copy(isSaving = false)
+            }
         }
     }
 

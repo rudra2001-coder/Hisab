@@ -11,7 +11,9 @@ object Routes {
     const val DAILY_CLOSE = "daily_close"
     const val SETTINGS = "settings"
     const val ANALYTICS = "analytics"
+    const val MORE = "more"
     const val ADD_PRODUCT = "add_product"
+    const val SPLASH = "splash"
     const val LOCK_SCREEN = "lock_screen"
 
     fun customerDetail(customerId: Long) = "customer_detail/$customerId"

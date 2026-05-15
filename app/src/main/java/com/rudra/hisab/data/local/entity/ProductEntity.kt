@@ -31,5 +31,6 @@ data class ProductEntity(
     val currentStock: Double = 0.0,
     val lowStockThreshold: Double = 10.0,
     val categoryId: Long? = null,
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+    val isDeleted: Boolean = false
 )

@@ -18,5 +18,6 @@ data class CustomerEntity(
     val phone: String = "",
     val address: String = "",
     val totalDue: Double = 0.0,
-    val lastTransactionAt: Long? = null
+    val lastTransactionAt: Long? = null,
+    val isDeleted: Boolean = false
 )

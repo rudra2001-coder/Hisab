@@ -1,7 +1,6 @@
 package com.rudra.hisab.data.local.dao
 
 import androidx.room.Dao
-import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -12,16 +11,16 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface CustomerDao {
 
-    @Query("SELECT * FROM customers ORDER BY totalDue DESC")
+    @Query("SELECT * FROM customers WHERE isDeleted = 0 ORDER BY totalDue DESC")
     fun getAllCustomers(): Flow<List<CustomerEntity>>
 
-    @Query("SELECT * FROM customers WHERE id = :id")
+    @Query("SELECT * FROM customers WHERE id = :id AND isDeleted = 0")
     suspend fun getCustomerById(id: Long): CustomerEntity?
 
-    @Query("SELECT * FROM customers WHERE phone = :phone LIMIT 1")
+    @Query("SELECT * FROM customers WHERE phone = :phone AND isDeleted = 0 LIMIT 1")
     suspend fun getCustomerByPhone(phone: String): CustomerEntity?
 
-    @Query("SELECT * FROM customers WHERE name LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%'")
+    @Query("SELECT * FROM customers WHERE (name LIKE '%' || :query || '%' OR phone LIKE '%' || :query || '%') AND isDeleted = 0")
     fun searchCustomers(query: String): Flow<List<CustomerEntity>>
 
     @Query("SELECT COUNT(*) FROM customers WHERE totalDue > 0")
@@ -39,15 +38,16 @@ interface CustomerDao {
     @Query("UPDATE customers SET totalDue = totalDue + :amount WHERE id = :customerId")
     suspend fun addDue(customerId: Long, amount: Double)
 
-    @Query("UPDATE customers SET totalDue = totalDue - :amount WHERE id = :customerId")
+    @Query("UPDATE customers SET totalDue = CASE WHEN totalDue - :amount >= 0 THEN totalDue - :amount ELSE 0 END WHERE id = :customerId")
     suspend fun removeDue(customerId: Long, amount: Double)
 
     @Query("UPDATE customers SET lastTransactionAt = :time WHERE id = :customerId")
     suspend fun updateLastTransaction(customerId: Long, time: Long)
 
-    @Delete
-    suspend fun delete(customer: CustomerEntity)
+    suspend fun delete(customer: CustomerEntity) {
+        deleteById(customer.id)
+    }
 
-    @Query("DELETE FROM customers WHERE id = :id")
+    @Query("UPDATE customers SET isDeleted = 1 WHERE id = :id")
     suspend fun deleteById(id: Long)
 }

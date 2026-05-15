@@ -8,7 +8,9 @@ import androidx.room.PrimaryKey
 enum class TransactionType {
     SALE,
     PURCHASE,
-    EXPENSE
+    EXPENSE,
+    PAYMENT,
+    STOCK_LOSS
 }
 
 enum class PaymentType {

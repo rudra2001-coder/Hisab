@@ -22,11 +22,11 @@ data class NavItem(
 )
 
 val bottomNavItems = listOf(
-    NavItem(Routes.DASHBOARD, "Dashboard", Icons.Default.Home),
-    NavItem(Routes.INVENTORY, "Stock", Icons.Default.Inventory),
-    NavItem(Routes.SALE, "Sale", Icons.Default.PointOfSale),
-    NavItem(Routes.CUSTOMERS, "Customers", Icons.Default.People),
-    NavItem(Routes.SETTINGS, "More", Icons.Default.Description)
+    NavItem(Routes.DASHBOARD, "ড্যাশবোর্ড", Icons.Default.Home),
+    NavItem(Routes.INVENTORY, "মজুদ", Icons.Default.Inventory),
+    NavItem(Routes.SALE, "বিক্রয়", Icons.Default.PointOfSale),
+    NavItem(Routes.CUSTOMERS, "গ্রাহক", Icons.Default.People),
+    NavItem(Routes.MORE, "আরও", Icons.Default.Description)
 )
 
 @Composable
