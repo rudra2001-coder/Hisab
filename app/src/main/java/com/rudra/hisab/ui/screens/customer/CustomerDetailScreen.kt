@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -83,6 +84,7 @@ fun CustomerDetailScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val dateFormat = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+    val currentCustomer = detailState.customer
 
     LaunchedEffect(customerId) {
         viewModel.loadCustomerDetail(customerId)
@@ -206,7 +208,7 @@ fun CustomerDetailScreen(
             containerColor = MaterialTheme.colorScheme.surface
         ) {
             PaymentSheetContent(
-                customer = customer!!,
+                customer = currentCustomer!!,
                 amount = detailState.paymentAmount,
                 note = detailState.paymentNote,
                 showOverpaymentWarning = detailState.showOverpaymentWarning,

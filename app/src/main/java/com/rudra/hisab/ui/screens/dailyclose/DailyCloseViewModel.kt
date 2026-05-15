@@ -21,16 +21,22 @@ import javax.inject.Inject
 
 data class DailyCloseState(
     val totalSales: Double = 0.0,
+    val cashSales: Double = 0.0,
+    val creditSales: Double = 0.0,
     val totalExpenses: Double = 0.0,
     val totalPurchases: Double = 0.0,
     val cashReceived: Double = 0.0,
     val creditGiven: Double = 0.0,
     val netProfit: Double = 0.0,
     val stockValue: Double = 0.0,
+    val saleCount: Int = 0,
+    val newDues: Double = 0.0,
+    val paymentsReceived: Double = 0.0,
     val isClosing: Boolean = false,
     val isClosed: Boolean = false,
     val alreadyClosed: Boolean = false,
-    val isLoading: Boolean = true
+    val isLoading: Boolean = true,
+    val pastSnapshots: List<DailySnapshotEntity> = emptyList()
 )
 
 @HiltViewModel
@@ -49,6 +55,10 @@ class DailyCloseViewModel @Inject constructor(
         loadDaySummary()
     }
 
+    fun refresh() {
+        loadDaySummary()
+    }
+
     private fun loadDaySummary() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
@@ -62,18 +72,37 @@ class DailyCloseViewModel @Inject constructor(
             val purchases = transactionRepository.getTodayPurchasesTotal(startOfDay, endOfDay)
             val expenses = expenseRepository.getTodayExpensesTotal(startOfDay, endOfDay)
             val creditGiven = transactionRepository.getTodayCreditGiven(startOfDay, endOfDay)
-            val cashReceived = sales - creditGiven
+            val cashSales = sales - creditGiven
             val stockValue = productRepository.getTotalStockValue().first() ?: 0.0
+            val saleCount = transactionRepository.getTodaySaleCount(startOfDay, endOfDay)
+
+            val allTodayTxs = transactionRepository.getTransactionsByDate(startOfDay, endOfDay).first()
+            val paymentsReceived = allTodayTxs.filter { it.type == com.rudra.hisab.data.local.entity.TransactionType.PAYMENT }
+                .sumOf { it.totalAmount }
+            val newDues = allTodayTxs.filter {
+                it.type == com.rudra.hisab.data.local.entity.TransactionType.SALE &&
+                        it.paymentType != com.rudra.hisab.data.local.entity.PaymentType.CASH
+            }.sumOf { it.totalAmount - it.paidAmount }
+
+            val sevenDaysAgo = now.minusDays(7)
+            val pastStart = sevenDaysAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val pastSnapshots = dailySnapshotRepository.getSnapshotsByRange(pastStart, startOfDay).first()
 
             _state.value = _state.value.copy(
                 totalSales = sales,
+                cashSales = cashSales,
+                creditSales = creditGiven,
                 totalExpenses = expenses,
                 totalPurchases = purchases,
-                cashReceived = cashReceived,
+                cashReceived = cashSales,
                 creditGiven = creditGiven,
                 netProfit = sales - (expenses + purchases),
                 stockValue = stockValue,
+                saleCount = saleCount,
+                newDues = newDues,
+                paymentsReceived = paymentsReceived,
                 alreadyClosed = alreadyClosed,
+                pastSnapshots = pastSnapshots,
                 isLoading = false
             )
         }

@@ -14,10 +14,14 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -68,6 +72,7 @@ class MainActivity : FragmentActivity() {
         setContent {
             val settings by appPreferences.settings.collectAsState(initial = null)
             val context = LocalContext.current
+            val backgroundTime = remember { mutableLongStateOf(0L) }
 
             LaunchedEffect(settings?.isBangla) {
                 if (settings != null) {
@@ -75,6 +80,20 @@ class MainActivity : FragmentActivity() {
                         LocaleListCompat.forLanguageTags(if (settings!!.isBangla) "bn" else "en")
                     )
                 }
+            }
+
+            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+            LaunchedEffect(Unit) {
+                val observer = LifecycleEventObserver { _, event ->
+                    when (event) {
+                        Lifecycle.Event.ON_PAUSE -> backgroundTime.longValue = System.currentTimeMillis()
+                        Lifecycle.Event.ON_RESUME -> {
+                            backgroundTime.longValue = 0
+                        }
+                        else -> {}
+                    }
+                }
+                lifecycleOwner.lifecycle.addObserver(observer)
             }
 
             HisabTheme {

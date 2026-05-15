@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -181,9 +182,9 @@ fun CustomerListScreen(
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                     )
-                    if (state.phoneError != null) {
+                    state.phoneError?.let { error ->
                         Text(
-                            text = state.phoneError,
+                            text = error,
                             color = RedExpense,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(start = 4.dp, top = 2.dp)
@@ -254,6 +255,14 @@ private fun CustomerCard(
                         text = customer.phone,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                if (customer.lastTransactionAt != null) {
+                    val dateFormat = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
+                    Text(
+                        text = dateFormat.format(java.util.Date(customer.lastTransactionAt)),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 }
             }

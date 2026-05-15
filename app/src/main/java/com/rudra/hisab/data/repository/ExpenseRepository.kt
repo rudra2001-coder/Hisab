@@ -24,6 +24,9 @@ class ExpenseRepository @Inject constructor(
     suspend fun getTodayExpensesTotal(startOfDay: Long, endOfDay: Long): Double =
         expenseDao.getTodayExpensesTotal(startOfDay, endOfDay)
 
+    fun getTodayExpensesFlow(startOfDay: Long, endOfDay: Long): Flow<Double> =
+        expenseDao.getTodayExpensesFlow(startOfDay, endOfDay)
+
     fun getExpenseBreakdown(startDate: Long, endDate: Long): Flow<List<ExpenseBreakdown>> =
         expenseDao.getExpenseBreakdown(startDate, endDate)
 

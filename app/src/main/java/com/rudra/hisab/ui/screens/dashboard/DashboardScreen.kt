@@ -47,7 +47,6 @@ fun DashboardScreen(
     onNavigateToCustomers: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
-    val netProfit = viewModel.getNetProfit()
 
     Column(
         modifier = Modifier
@@ -104,8 +103,8 @@ fun DashboardScreen(
 
             SummaryCard(
                 label = "নিট মুনাফা",
-                amount = netProfit,
-                color = if (netProfit >= 0) GreenProfit else RedExpense,
+                amount = state.netProfit,
+                color = if (state.netProfit >= 0) GreenProfit else RedExpense,
                 icon = Icons.Default.AttachMoney
             )
 

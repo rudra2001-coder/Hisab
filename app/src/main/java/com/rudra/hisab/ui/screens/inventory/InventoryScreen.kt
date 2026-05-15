@@ -1,5 +1,6 @@
 package com.rudra.hisab.ui.screens.inventory
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,13 +25,17 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -150,15 +157,25 @@ private fun ProductCard(
     onRemoveStock: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val isLowStock = product.currentStock <= product.lowStockThreshold
+    val isLowStock = product.currentStock <= product.lowStockThreshold && product.currentStock > 0
+    val isOutOfStock = product.currentStock <= 0
+
+    val borderColor = when {
+        isOutOfStock -> RedExpense
+        isLowStock -> OrangeDue
+        else -> null
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = if (isLowStock) OrangeDue.copy(alpha = 0.08f)
-            else MaterialTheme.colorScheme.surface
+            containerColor = when {
+                isOutOfStock -> RedExpense.copy(alpha = 0.05f)
+                isLowStock -> OrangeDue.copy(alpha = 0.08f)
+                else -> MaterialTheme.colorScheme.surface
+            }
         ),
-        border = if (isLowStock) androidx.compose.foundation.BorderStroke(1.dp, OrangeDue) else null
+        border = if (borderColor != null) BorderStroke(1.dp, borderColor) else null
     ) {
         Column(
             modifier = Modifier
@@ -171,11 +188,27 @@ private fun ProductCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = product.nameBangla,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = product.nameBangla,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                        if (isOutOfStock) {
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Surface(
+                                shape = RoundedCornerShape(4.dp),
+                                color = RedExpense
+                            ) {
+                                Text(
+                                    text = "স্টক শেষ",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Color.White,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
                     Text(
                         text = "${product.unit} - ${CurrencyFormatter.format(product.sellPrice)}",
                         style = MaterialTheme.typography.bodyMedium,
@@ -183,10 +216,16 @@ private fun ProductCard(
                     )
                 }
                 Text(
-                    text = if (isLowStock) "${product.currentStock.toInt()} !" else product.currentStock.toInt().toString(),
+                    text = if (isOutOfStock) "০"
+                    else if (isLowStock) "${product.currentStock.toInt()} !"
+                    else product.currentStock.toInt().toString(),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isLowStock) OrangeDue else GreenProfit
+                    color = when {
+                        isOutOfStock -> RedExpense
+                        isLowStock -> OrangeDue
+                        else -> GreenProfit
+                    }
                 )
             }
 
@@ -222,6 +261,19 @@ private fun ProductCard(
     }
 }
 
+private val unitOptions = listOf("kg", "mon", "bag", "piece", "litre", "dozen")
+
+private fun unitToBangla(unit: String): String = when (unit) {
+    "kg" -> "কেজি"
+    "mon" -> "মণ"
+    "bag" -> "বস্তা"
+    "piece" -> "পিস"
+    "litre" -> "লিটার"
+    "dozen" -> "ডজন"
+    else -> unit
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddProductDialog(
     categories: List<com.rudra.hisab.data.local.entity.CategoryEntity>,
@@ -230,12 +282,14 @@ private fun AddProductDialog(
 ) {
     var name by remember { mutableStateOf("") }
     var nameBn by remember { mutableStateOf("") }
-    var unit by remember { mutableStateOf("piece") }
+    var unit by remember { mutableStateOf("kg") }
     var buyPrice by remember { mutableStateOf("") }
     var sellPrice by remember { mutableStateOf("") }
     var stock by remember { mutableStateOf("") }
     var lowStock by remember { mutableStateOf("10") }
     var selectedCategory by remember { mutableStateOf<Long?>(null) }
+    var unitExpanded by remember { mutableStateOf(false) }
+    var categoryExpanded by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -243,18 +297,71 @@ private fun AddProductDialog(
         text = {
             Column {
                 OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("নাম (English)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = nameBn, onValueChange = { nameBn = it }, label = { Text("নাম (বাংলা)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = unit, onValueChange = { unit = it }, label = { Text("একক (kg/piece/litre)") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = buyPrice, onValueChange = { buyPrice = it }, label = { Text("ক্রয় মূল্য") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = sellPrice, onValueChange = { sellPrice = it }, label = { Text("বিক্রয় মূল্য") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = stock, onValueChange = { stock = it }, label = { Text("প্রাথমিক মজুদ") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(value = lowStock, onValueChange = { lowStock = it }, label = { Text("সতর্কতা সীমা") }, modifier = Modifier.fillMaxWidth(), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                Spacer(modifier = Modifier.height(4.dp))
+
+                OutlinedTextField(value = nameBn, onValueChange = { nameBn = it }, label = { Text("নাম (বাংলা) *") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                Spacer(modifier = Modifier.height(4.dp))
+
+                ExposedDropdownMenuBox(expanded = unitExpanded, onExpandedChange = { unitExpanded = it }) {
+                    OutlinedTextField(
+                        value = unitToBangla(unit),
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("একক") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = unitExpanded) },
+                        modifier = Modifier.fillMaxWidth().menuAnchor(),
+                        singleLine = true
+                    )
+                    ExposedDropdownMenu(expanded = unitExpanded, onDismissRequest = { unitExpanded = false }) {
+                        unitOptions.forEach { u ->
+                            DropdownMenuItem(
+                                text = { Text(unitToBangla(u)) },
+                                onClick = { unit = u; unitExpanded = false }
+                            )
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(4.dp))
+
+                if (categories.isNotEmpty()) {
+                    ExposedDropdownMenuBox(expanded = categoryExpanded, onExpandedChange = { categoryExpanded = it }) {
+                        OutlinedTextField(
+                            value = categories.find { it.id == selectedCategory }?.nameBangla ?: "বিভাগ নির্বাচন করুন",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("বিভাগ") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            singleLine = true
+                        )
+                        ExposedDropdownMenu(expanded = categoryExpanded, onDismissRequest = { categoryExpanded = false }) {
+                            categories.forEach { cat ->
+                                DropdownMenuItem(
+                                    text = { Text(cat.nameBangla) },
+                                    onClick = { selectedCategory = cat.id; categoryExpanded = false }
+                                )
+                            }
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = buyPrice, onValueChange = { buyPrice = it }, label = { Text("ক্রয় মূল্য") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    OutlinedTextField(value = sellPrice, onValueChange = { sellPrice = it }, label = { Text("বিক্রয় মূল্য") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                }
+
+                val sell = sellPrice.toDoubleOrNull() ?: 0.0
+                val buy = buyPrice.toDoubleOrNull() ?: 0.0
+                if (sell > 0 && buy > 0 && sell < buy) {
+                    Text("সতর্কতা: বিক্রয় মূল্য ক্রয় মূল্যের চেয়ে কম", color = com.rudra.hisab.ui.theme.OrangeDue, style = MaterialTheme.typography.bodySmall)
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(value = stock, onValueChange = { stock = it }, label = { Text("প্রাথমিক মজুদ") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    OutlinedTextField(value = lowStock, onValueChange = { lowStock = it }, label = { Text("সতর্কতা সীমা") }, modifier = Modifier.weight(1f), singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                }
             }
         },
         confirmButton = {

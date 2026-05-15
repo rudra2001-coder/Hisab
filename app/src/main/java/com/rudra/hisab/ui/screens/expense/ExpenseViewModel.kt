@@ -2,6 +2,7 @@ package com.rudra.hisab.ui.screens.expense
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.rudra.hisab.data.local.HisabDatabase
 import com.rudra.hisab.data.local.entity.ExpenseCategory
 import com.rudra.hisab.data.local.entity.ExpenseEntity
@@ -10,6 +11,8 @@ import com.rudra.hisab.data.local.entity.TransactionType
 import com.rudra.hisab.data.repository.ExpenseRepository
 import com.rudra.hisab.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,14 +22,20 @@ import java.time.LocalTime
 import java.time.ZoneId
 import javax.inject.Inject
 
+enum class ExpenseFilter { ALL, TODAY, WEEK, MONTH }
+
 data class ExpenseState(
-    val todayExpenses: List<ExpenseEntity> = emptyList(),
-    val todayTotal: Double = 0.0,
+    val expenses: List<ExpenseEntity> = emptyList(),
+    val totalForPeriod: Double = 0.0,
+    val filter: ExpenseFilter = ExpenseFilter.TODAY,
+    val groupedExpenses: Map<String, List<ExpenseEntity>> = emptyMap(),
     val showAddDialog: Boolean = false,
     val selectedCategory: ExpenseCategory = ExpenseCategory.OTHER,
     val amount: String = "",
     val description: String = "",
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val deletedExpense: ExpenseEntity? = null,
+    val showUndoSnackbar: Boolean = false
 )
 
 @HiltViewModel
@@ -38,22 +47,52 @@ class ExpenseViewModel @Inject constructor(
 
     private val _state = MutableStateFlow(ExpenseState())
     val state: StateFlow<ExpenseState> = _state.asStateFlow()
+    private var loadJob: Job? = null
 
     init {
-        loadTodayExpenses()
+        setFilter(ExpenseFilter.TODAY)
     }
 
-    private fun loadTodayExpenses() {
-        val now = LocalDate.now()
-        val startOfDay = now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val endOfDay = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    fun setFilter(filter: ExpenseFilter) {
+        _state.value = _state.value.copy(filter = filter)
+        loadExpenses()
+    }
 
-        viewModelScope.launch {
-            expenseRepository.getExpensesByDate(startOfDay, endOfDay).collect { expenses ->
+    private fun loadExpenses() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            val now = LocalDate.now()
+            val (start, end) = when (_state.value.filter) {
+                ExpenseFilter.TODAY -> {
+                    val s = now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val e = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    Pair(s, e)
+                }
+                ExpenseFilter.WEEK -> {
+                    val weekAgo = now.minusDays(7)
+                    val s = weekAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val e = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    Pair(s, e)
+                }
+                ExpenseFilter.MONTH -> {
+                    val monthAgo = now.minusDays(30)
+                    val s = monthAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val e = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    Pair(s, e)
+                }
+                ExpenseFilter.ALL -> Pair(0L, Long.MAX_VALUE)
+            }
+
+            expenseRepository.getExpensesByDateRange(start, end).collect { expenses ->
                 val total = expenses.sumOf { it.amount }
+                val grouped = expenses.groupBy {
+                    java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.forLanguageTag("bn"))
+                        .format(java.util.Date(it.date))
+                }
                 _state.value = _state.value.copy(
-                    todayExpenses = expenses,
-                    todayTotal = total
+                    expenses = expenses,
+                    totalForPeriod = total,
+                    groupedExpenses = grouped
                 )
             }
         }
@@ -121,6 +160,22 @@ class ExpenseViewModel @Inject constructor(
     fun deleteExpense(expense: ExpenseEntity) {
         viewModelScope.launch {
             expenseRepository.delete(expense)
+            _state.value = _state.value.copy(
+                deletedExpense = expense,
+                showUndoSnackbar = true
+            )
+            delay(5000)
+            if (_state.value.deletedExpense?.id == expense.id) {
+                _state.value = _state.value.copy(deletedExpense = null, showUndoSnackbar = false)
+            }
+        }
+    }
+
+    fun undoDelete() {
+        val expense = _state.value.deletedExpense ?: return
+        viewModelScope.launch {
+            expenseRepository.insert(expense)
+            _state.value = _state.value.copy(deletedExpense = null, showUndoSnackbar = false)
         }
     }
 }

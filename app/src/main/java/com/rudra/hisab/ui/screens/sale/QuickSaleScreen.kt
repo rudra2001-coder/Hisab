@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,6 +47,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -74,7 +76,10 @@ import com.rudra.hisab.ui.theme.BlueInfoContainer
 import com.rudra.hisab.util.BanglaNumberConverter
 import com.rudra.hisab.util.CurrencyFormatter
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import kotlinx.coroutines.delay
@@ -199,6 +204,17 @@ fun QuickSaleScreen(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
         )
+
+        state.errorMessage?.let { error ->
+            androidx.compose.material3.Snackbar(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(16.dp),
+                containerColor = RedExpense
+            ) {
+                Text(text = error, color = Color.White)
+            }
+        }
     }
 
     if (state.selectedProduct != null && !state.saleComplete) {
@@ -223,16 +239,6 @@ fun QuickSaleScreen(
         }
     }
 
-    state.errorMessage?.let { error ->
-        androidx.compose.material3.Snackbar(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .padding(16.dp),
-            containerColor = RedExpense
-        ) {
-            Text(text = error, color = Color.White)
-        }
-    }
 }
 
 @Composable
@@ -254,7 +260,7 @@ private fun ProductTile(
     }
 
     Card(
-        onClick = if (outOfStock) {} else onClick,
+        onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .height(110.dp),

@@ -93,10 +93,19 @@ fun SettingsScreen(
                 title = "পিন",
                 subtitle = if (state.settings.isPinEnabled) "পিন চালু" else "পিন বন্ধ",
                 onClick = {
-                    if (state.settings.isPinEnabled) viewModel.disablePin()
+                    if (state.settings.isPinEnabled) viewModel.showPinChange()
                     else viewModel.showPinSetup()
                 }
             )
+            if (state.settings.isPinEnabled) {
+                HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+                SettingsRow(
+                    icon = Icons.Default.Lock,
+                    title = "পিন সরান",
+                    subtitle = "পিন নিষ্ক্রিয় করুন",
+                    onClick = { viewModel.disablePin() }
+                )
+            }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Fingerprint,
@@ -125,46 +134,50 @@ fun SettingsScreen(
 
     // PIN Dialog
     if (state.showPinDialog) {
+        val dialogTitle = when (state.pinMode) {
+            PinMode.SETUP -> "পিন সেটআপ"
+            PinMode.CHANGE_OLD -> "পিন পরিবর্তন"
+            PinMode.CHANGE_NEW -> "নতুন পিন"
+            PinMode.DISABLE -> "পিন সরান"
+        }
         AlertDialog(
             onDismissRequest = { viewModel.hidePinSetup() },
-            title = { Text("পিন সেটআপ") },
+            title = { Text(dialogTitle) },
             text = {
                 Column {
-                    if (state.pinStep == 1) {
-                        Text("একটি ৪-ডিজিটের পিন দিন")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = state.pinInput,
-                            onValueChange = viewModel::setPinInput,
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = { Text("পিন") }
-                        )
-                    } else {
-                        Text("পিন আবার দিন")
-                        Spacer(modifier = Modifier.height(8.dp))
-                        OutlinedTextField(
-                            value = state.pinConfirm,
-                            onValueChange = viewModel::setPinConfirm,
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            placeholder = { Text("পিন নিশ্চিত করুন") }
-                        )
-                        if (state.pinInput != state.pinConfirm && state.pinConfirm.length == 4) {
-                            Text("পিন মিলছে না", color = MaterialTheme.colorScheme.error)
-                        }
+                    val promptText = when {
+                        state.pinMode == PinMode.DISABLE -> "পিন দিন"
+                        state.pinMode == PinMode.CHANGE_OLD -> "বর্তমান পিন দিন"
+                        state.pinStep == 1 -> "নতুন ৪-ডিজিটের পিন দিন"
+                        else -> "পিন আবার দিন"
+                    }
+                    Text(promptText)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedTextField(
+                        value = if (state.pinStep == 1) state.pinInput else state.pinConfirm,
+                        onValueChange = { if (state.pinStep == 1) viewModel.setPinInput(it) else viewModel.setPinConfirm(it) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        placeholder = { Text("পিন") }
+                    )
+                    state.pinError?.let { error ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                    }
+                    if (state.pinStep == 2 && state.pinInput != state.pinConfirm && state.pinConfirm.length == 4) {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("পিন মিলছে না", color = MaterialTheme.colorScheme.error)
                     }
                 }
             },
             confirmButton = {
-                Button(
-                    onClick = {
-                        if (state.pinStep == 1) viewModel.nextPinStep()
-                        else viewModel.savePin()
-                    },
-                    enabled = if (state.pinStep == 1) state.pinInput.length == 4
-                    else state.pinConfirm.length == 4 && state.pinInput == state.pinConfirm
-                ) { Text(if (state.pinStep == 1) "পরবর্তী" else "সংরক্ষণ") }
+                val (buttonText, enabled, onClick) = when {
+                    state.pinMode == PinMode.DISABLE -> Triple("নিশ্চিত", state.pinInput.length == 4, { viewModel.verifyAndProceed() })
+                    state.pinMode == PinMode.CHANGE_OLD -> Triple("পরবর্তী", state.pinInput.length == 4, { viewModel.verifyAndProceed() })
+                    state.pinStep == 1 -> Triple("পরবর্তী", state.pinInput.length == 4, { viewModel.nextPinStep() })
+                    else -> Triple("সংরক্ষণ", state.pinConfirm.length == 4 && state.pinInput == state.pinConfirm, { viewModel.savePin() })
+                }
+                Button(onClick = onClick, enabled = enabled) { Text(buttonText) }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.hidePinSetup() }) { Text("বাতিল") }

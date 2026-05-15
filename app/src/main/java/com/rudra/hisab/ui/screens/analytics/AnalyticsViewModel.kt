@@ -5,19 +5,24 @@ import androidx.lifecycle.viewModelScope
 import com.rudra.hisab.data.local.dao.ExpenseBreakdown
 import com.rudra.hisab.data.local.dao.ProductSalesSummary
 import com.rudra.hisab.data.local.entity.ProductEntity
+import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.CustomerRepository
 import com.rudra.hisab.data.repository.DailySnapshotRepository
 import com.rudra.hisab.data.repository.ExpenseRepository
 import com.rudra.hisab.data.repository.ProductRepository
 import com.rudra.hisab.data.repository.TransactionRepository
+import com.rudra.hisab.util.ReportData
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.ZoneId
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 data class AnalyticsState(
@@ -37,7 +42,8 @@ class AnalyticsViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val productRepository: ProductRepository,
     private val customerRepository: CustomerRepository,
-    private val dailySnapshotRepository: DailySnapshotRepository
+    private val dailySnapshotRepository: DailySnapshotRepository,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(AnalyticsState())
@@ -111,5 +117,36 @@ class AnalyticsViewModel @Inject constructor(
                 _state.value = _state.value.copy(dueCustomers = aging, isLoading = false)
             }
         }
+    }
+
+    suspend fun buildReportData(): ReportData {
+        val settings = appPreferences.settings.first()
+        val now = LocalDate.now()
+        val weekAgo = now.minusDays(6).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val todayEnd = now.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val monthAgo = now.minusDays(30).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+
+        val totalSales = transactionRepository.getTodaySalesTotal(weekAgo, todayEnd)
+        val totalPurchases = transactionRepository.getTodayPurchasesTotal(weekAgo, todayEnd)
+        val totalExpenses = expenseRepository.getTodayExpensesTotal(weekAgo, todayEnd)
+        val snapshots = dailySnapshotRepository.getSnapshotsByRange(monthAgo, todayEnd).first()
+        val topProducts = transactionRepository.getTopProducts(monthAgo).first()
+        val topProductsDetails = topProducts.mapNotNull { productRepository.getProductById(it.productId) }
+
+        return ReportData(
+            shopName = settings.shopName,
+            startDate = dateFormat.format(Date(weekAgo)),
+            endDate = dateFormat.format(Date(todayEnd)),
+            totalSales = totalSales,
+            totalExpenses = totalExpenses,
+            totalPurchases = totalPurchases,
+            netProfit = totalSales - totalExpenses,
+            cashReceived = totalSales - transactionRepository.getTodayCreditGiven(weekAgo, todayEnd),
+            creditGiven = transactionRepository.getTodayCreditGiven(weekAgo, todayEnd),
+            saleCount = transactionRepository.getTodaySaleCount(weekAgo, todayEnd),
+            topProducts = topProductsDetails.zip(topProducts).map { (p, s) -> p.nameBangla to s.revenue },
+            dailyBreakdown = snapshots
+        )
     }
 }

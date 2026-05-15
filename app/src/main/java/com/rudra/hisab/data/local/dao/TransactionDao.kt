@@ -41,13 +41,22 @@ interface TransactionDao {
     suspend fun getTodaySaleCount(startOfDay: Long, endOfDay: Long): Int
 
     @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM transactions WHERE type = 'SALE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")
+    fun getTodaySalesFlow(startOfDay: Long, endOfDay: Long): Flow<Double>
+
+    @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM transactions WHERE type = 'SALE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")
     suspend fun getTodaySalesTotal(startOfDay: Long, endOfDay: Long): Double
+
+    @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM transactions WHERE type = 'PURCHASE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")
+    fun getTodayPurchasesFlow(startOfDay: Long, endOfDay: Long): Flow<Double>
 
     @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM transactions WHERE type = 'PURCHASE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")
     suspend fun getTodayPurchasesTotal(startOfDay: Long, endOfDay: Long): Double
 
     @Query("SELECT COALESCE(SUM(paidAmount), 0) FROM transactions WHERE type = 'SALE' AND paymentType IN ('CREDIT', 'PARTIAL') AND createdAt >= :startOfDay AND createdAt < :endOfDay")
     suspend fun getTodayCreditGiven(startOfDay: Long, endOfDay: Long): Double
+
+    @Query("SELECT COALESCE(SUM(totalAmount - paidAmount), 0) FROM transactions WHERE type = 'SALE' AND paymentType IN ('CREDIT', 'PARTIAL') AND createdAt >= :startOfDay AND createdAt < :endOfDay")
+    fun getTodayCreditFlow(startOfDay: Long, endOfDay: Long): Flow<Double>
 
     @Query("SELECT COALESCE(SUM(totalAmount - paidAmount), 0) FROM transactions WHERE type = 'SALE' AND paymentType IN ('CREDIT', 'PARTIAL')")
     fun getTotalOutstandingDues(): Flow<Double?>

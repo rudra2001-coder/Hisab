@@ -15,9 +15,12 @@ import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.Worker
+import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.rudra.hisab.MainActivity
+import androidx.room.Room
+import com.rudra.hisab.data.local.HisabDatabase
+import com.rudra.hisab.data.local.entity.TransactionType
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -26,22 +29,27 @@ import java.util.concurrent.TimeUnit
 class ReminderWorker(
     context: Context,
     params: WorkerParameters
-) : Worker(context, params) {
+) : CoroutineWorker(context, params) {
 
-    override fun doWork(): Result {
-        val prefs = applicationContext.getSharedPreferences("hisab_preferences", Context.MODE_PRIVATE)
-        val hasCompletedOnboarding = prefs.getBoolean("has_completed_onboarding", false)
-        if (!hasCompletedOnboarding) return Result.success()
+    override suspend fun doWork(): Result {
+        try {
+            val db = Room.databaseBuilder(
+                applicationContext,
+                HisabDatabase::class.java,
+                HisabDatabase.DATABASE_NAME
+            ).build()
 
-        val todayStart = LocalDate.now()
-            .atStartOfDay(ZoneId.systemDefault())
-            .toInstant()
-            .toEpochMilli()
+            val today = LocalDate.now()
+            val startOfDay = today.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val endOfDay = today.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        val lastSaleDate = prefs.getLong("last_sale_date", 0L)
-
-        if (lastSaleDate < todayStart) {
-            showNotification()
+            val saleCount = db.transactionDao().getTodaySaleCount(startOfDay, endOfDay)
+            if (saleCount == 0) {
+                showNotification()
+            }
+            db.close()
+        } catch (_: Exception) {
+            return Result.retry()
         }
 
         return Result.success()

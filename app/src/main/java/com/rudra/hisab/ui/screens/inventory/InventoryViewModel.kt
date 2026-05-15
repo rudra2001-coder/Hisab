@@ -2,6 +2,7 @@ package com.rudra.hisab.ui.screens.inventory
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.rudra.hisab.data.local.HisabDatabase
 import com.rudra.hisab.data.local.entity.CategoryEntity
 import com.rudra.hisab.data.local.entity.ProductEntity

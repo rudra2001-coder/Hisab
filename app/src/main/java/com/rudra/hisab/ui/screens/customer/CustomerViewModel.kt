@@ -2,6 +2,7 @@ package com.rudra.hisab.ui.screens.customer
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.rudra.hisab.data.local.HisabDatabase
 import com.rudra.hisab.data.local.entity.CustomerEntity
 import com.rudra.hisab.data.local.entity.PaymentType
@@ -214,12 +215,6 @@ class CustomerViewModel @Inject constructor(
             _detailState.value = _detailState.value.copy(errorMessage = "পরিমাণ শূন্য হতে পারে না")
             return
         }
-        val due = customer.totalDue
-        if (amount > due) {
-            _detailState.value = _detailState.value.copy(errorMessage = "পরিমাণ বাকির চেয়ে বেশি হতে পারে না")
-            return
-        }
-
         viewModelScope.launch {
             _detailState.value = _detailState.value.copy(isSaving = true, errorMessage = null)
             try {

@@ -27,6 +27,9 @@ interface ExpenseDao {
     @Query("SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE date >= :startOfDay AND date < :endOfDay")
     suspend fun getTodayExpensesTotal(startOfDay: Long, endOfDay: Long): Double
 
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM expenses WHERE date >= :startOfDay AND date < :endOfDay")
+    fun getTodayExpensesFlow(startOfDay: Long, endOfDay: Long): Flow<Double>
+
     @Query("SELECT categoryId, COALESCE(SUM(amount), 0) as total FROM expenses WHERE date >= :startDate AND date <= :endDate GROUP BY categoryId")
     fun getExpenseBreakdown(startDate: Long, endDate: Long): Flow<List<ExpenseBreakdown>>
 

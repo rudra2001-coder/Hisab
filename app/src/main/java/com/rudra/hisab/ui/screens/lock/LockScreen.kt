@@ -98,8 +98,6 @@ fun LockScreen(
             .joinToString("") { "%02x".format(it) }
         if (settings.pinHash.isNotEmpty() && hash == settings.pinHash) {
             onUnlock()
-        } else if (settings.pinHash.isNotEmpty() && pin == settings.pinHash) {
-            onUnlock()
         } else {
             attempts++
             if (attempts >= 3) {

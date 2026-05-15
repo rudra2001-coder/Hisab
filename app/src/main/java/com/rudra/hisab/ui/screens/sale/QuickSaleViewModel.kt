@@ -2,6 +2,7 @@ package com.rudra.hisab.ui.screens.sale
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import com.rudra.hisab.data.local.HisabDatabase
 import com.rudra.hisab.data.local.entity.CustomerEntity
 import com.rudra.hisab.data.local.entity.PaymentType
@@ -273,67 +274,6 @@ class QuickSaleViewModel @Inject constructor(
                 isProcessing = false
             }
         }
-    }
-        if (qty > product.currentStock) {
-            _state.value = _state.value.copy(errorMessage = "সর্বোচ্চ ${product.currentStock.toInt()} ${product.unit} বিক্রি করতে পারবেন")
-            return
-        }
-        if (s.isCustomerSelectionRequired && s.selectedCustomer == null) {
-            _state.value = _state.value.copy(errorMessage = "গ্রাহক নির্বাচন করুন")
-            return
-        }
-
-        val totalAmount = s.totalPrice
-        val paidAmount = when (s.paymentType) {
-            PaymentType.CASH -> totalAmount
-            PaymentType.CREDIT -> 0.0
-            PaymentType.PARTIAL -> s.paidAmount.toDoubleOrNull() ?: 0.0
-        }
-
-        isProcessing = true
-        viewModelScope.launch {
-            _state.value = _state.value.copy(isSaving = true, errorMessage = null)
-            try {
-                database.withTransaction {
-                    productRepository.removeStock(product.id, qty)
-                    transactionRepository.insert(
-                        TransactionEntity(
-                            type = TransactionType.SALE,
-                            paymentType = s.paymentType,
-                            productId = product.id,
-                            customerId = s.selectedCustomer?.id,
-                            quantity = qty,
-                            unitPrice = product.sellPrice,
-                            totalAmount = totalAmount,
-                            paidAmount = paidAmount
-                        )
-                    )
-                    if (s.selectedCustomer != null && s.paymentType != PaymentType.CASH) {
-                        val dueAmount = totalAmount - paidAmount
-                        if (dueAmount > 0) {
-                            customerRepository.addDue(s.selectedCustomer.id, dueAmount)
-                        }
-                        customerRepository.updateLastTransaction(s.selectedCustomer.id, System.currentTimeMillis())
-                    }
-                }
-                _state.value = _state.value.copy(
-                    isSaving = false,
-                    saleComplete = true
-                )
-                checkLowStockAndNotify(product)
-            } catch (e: Exception) {
-                _state.value = _state.value.copy(
-                    isSaving = false,
-                    errorMessage = "বিক্রয় ব্যর্থ হয়েছে: ${e.localizedMessage}"
-                )
-            } finally {
-                isProcessing = false
-            }
-        }
-    }
-
-    private fun checkLowStockAndNotify(product: ProductEntity) {
-        // TODO: Implement low stock notification
     }
 
     fun resetAfterSale() {
