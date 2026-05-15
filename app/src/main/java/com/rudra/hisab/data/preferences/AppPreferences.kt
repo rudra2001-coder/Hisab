@@ -34,6 +34,9 @@ data class AppSettings(
     val quickActions: String = "sale,stock,expense,customer",
     val navOrder: String = "dashboard,inventory,sale,customers,more",
     val batchTrackingEnabled: Boolean = false,
+    val autoBackupEnabled: Boolean = false,
+    val backupFrequency: String = "daily",
+    val lastBackupTime: Long = 0L,
     val primaryColor: String = "",
     val secondaryColor: String = ""
 )
@@ -63,6 +66,9 @@ class AppPreferences @Inject constructor(
         val QUICK_ACTIONS = stringPreferencesKey("quick_actions")
         val NAV_ORDER = stringPreferencesKey("nav_order")
         val BATCH_TRACKING_ENABLED = booleanPreferencesKey("batch_tracking_enabled")
+        val AUTO_BACKUP_ENABLED = booleanPreferencesKey("auto_backup_enabled")
+        val BACKUP_FREQUENCY = stringPreferencesKey("backup_frequency")
+        val LAST_BACKUP_TIME = androidx.datastore.preferences.core.longPreferencesKey("last_backup_time")
         val PRIMARY_COLOR = stringPreferencesKey("primary_color")
         val SECONDARY_COLOR = stringPreferencesKey("secondary_color")
     }
@@ -88,6 +94,9 @@ class AppPreferences @Inject constructor(
             quickActions = prefs[Keys.QUICK_ACTIONS] ?: "sale,stock,expense,customer",
             navOrder = prefs[Keys.NAV_ORDER] ?: "dashboard,inventory,sale,customers,more",
             batchTrackingEnabled = prefs[Keys.BATCH_TRACKING_ENABLED] ?: false,
+            autoBackupEnabled = prefs[Keys.AUTO_BACKUP_ENABLED] ?: false,
+            backupFrequency = prefs[Keys.BACKUP_FREQUENCY] ?: "daily",
+            lastBackupTime = prefs[Keys.LAST_BACKUP_TIME] ?: 0L,
             primaryColor = prefs[Keys.PRIMARY_COLOR] ?: "",
             secondaryColor = prefs[Keys.SECONDARY_COLOR] ?: ""
         )
@@ -166,6 +175,18 @@ class AppPreferences @Inject constructor(
 
     suspend fun setBatchTrackingEnabled(enabled: Boolean) {
         context.dataStore.edit { it[Keys.BATCH_TRACKING_ENABLED] = enabled }
+    }
+
+    suspend fun setAutoBackupEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.AUTO_BACKUP_ENABLED] = enabled }
+    }
+
+    suspend fun setBackupFrequency(frequency: String) {
+        context.dataStore.edit { it[Keys.BACKUP_FREQUENCY] = frequency }
+    }
+
+    suspend fun setLastBackupTime(time: Long) {
+        context.dataStore.edit { it[Keys.LAST_BACKUP_TIME] = time }
     }
 
     suspend fun setPrimaryColor(color: String) {

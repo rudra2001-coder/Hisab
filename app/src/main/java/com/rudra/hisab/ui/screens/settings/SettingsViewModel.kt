@@ -10,6 +10,8 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.preferences.AppSettings
+import com.rudra.hisab.util.BackupManager
+import com.rudra.hisab.worker.BackupWorker
 import com.rudra.hisab.worker.MonthlyReportWorker
 import com.rudra.hisab.worker.ReminderWorker
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -49,7 +51,10 @@ data class SettingsState(
     val deleteWindowInput: String = "",
     val showReminderTimeDialog: Boolean = false,
     val reminderHour: String = "",
-    val reminderMinute: String = ""
+    val reminderMinute: String = "",
+    val showBackupDialog: Boolean = false,
+    val isBackingUp: Boolean = false,
+    val backupSuccess: Boolean? = null
 )
 
 enum class PinMode { SETUP, CHANGE, DISABLE }
@@ -57,6 +62,7 @@ enum class PinMode { SETUP, CHANGE, DISABLE }
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val appPreferences: AppPreferences,
+    private val backupManager: BackupManager,
     @dagger.hilt.android.qualifiers.ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -229,6 +235,45 @@ class SettingsViewModel @Inject constructor(
             }
         }
     }
+
+    // Auto Backup
+    fun toggleAutoBackup() {
+        viewModelScope.launch {
+            val enabled = !_state.value.settings.autoBackupEnabled
+            appPreferences.setAutoBackupEnabled(enabled)
+            if (enabled) {
+                BackupWorker.schedule(context, _state.value.settings.backupFrequency)
+            } else {
+                BackupWorker.cancel(context)
+            }
+        }
+    }
+
+    fun setBackupFrequency(frequency: String) {
+        viewModelScope.launch {
+            appPreferences.setBackupFrequency(frequency)
+            if (_state.value.settings.autoBackupEnabled) {
+                BackupWorker.schedule(context, frequency)
+            }
+        }
+    }
+
+    fun performManualBackup() {
+        _state.value = _state.value.copy(isBackingUp = true, backupSuccess = null)
+        viewModelScope.launch {
+            val result = backupManager.performBackup()
+            _state.value = _state.value.copy(
+                isBackingUp = false,
+                backupSuccess = result.isSuccess
+            )
+            if (result.isSuccess) {
+                appPreferences.setLastBackupTime(System.currentTimeMillis())
+            }
+        }
+    }
+
+    fun showBackupDialog() { _state.value = _state.value.copy(showBackupDialog = true, backupSuccess = null) }
+    fun hideBackupDialog() { _state.value = _state.value.copy(showBackupDialog = false) }
 
     // Nav Order
     fun showNavOrderEditor() { _state.value = _state.value.copy(showNavOrderEditor = true) }

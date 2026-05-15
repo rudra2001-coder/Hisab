@@ -380,6 +380,15 @@ class MainActivity : FragmentActivity() {
                                         },
                                         onNavigateToSettings = {
                                             navController.navigate(Routes.SETTINGS)
+                                        },
+                                        onNavigateToAccounting = {
+                                            navController.navigate(Routes.ACCOUNTING)
+                                        },
+                                        onNavigateToReports = {
+                                            navController.navigate(Routes.REPORTS)
+                                        },
+                                        onNavigateToExport = {
+                                            navController.navigate(Routes.EXPORT)
                                         }
                                     )
                                 }

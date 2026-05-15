@@ -9,14 +9,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Brightness6
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FileDownload
@@ -37,6 +40,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,6 +62,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.RedExpense
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun SettingsScreen(
@@ -243,7 +250,40 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "ডেটা") {
+        SettingsCard(title = "ডেটা ও ব্যাকআপ") {
+            SettingsRow(
+                icon = Icons.Default.CloudUpload,
+                title = "অটো ব্যাকআপ",
+                subtitle = if (state.settings.autoBackupEnabled) "চালু (${if (state.settings.backupFrequency == "daily") "প্রতিদিন" else "সাপ্তাহিক"})" else "বন্ধ",
+                trailing = {
+                    Switch(
+                        checked = state.settings.autoBackupEnabled,
+                        onCheckedChange = { viewModel.toggleAutoBackup() }
+                    )
+                }
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsRow(
+                icon = Icons.Default.Schedule,
+                title = "ব্যাকআপ ফ্রিকোয়েন্সি",
+                subtitle = if (state.settings.backupFrequency == "daily") "প্রতিদিন" else "সাপ্তাহিক",
+                onClick = { viewModel.showBackupDialog() }
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsRow(
+                icon = Icons.Default.CloudUpload,
+                title = "এখনই ব্যাকআপ নিন",
+                subtitle = if (state.settings.lastBackupTime > 0) "সর্বশেষ: ${SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(state.settings.lastBackupTime))}" else "কখনো ব্যাকআপ নেয়া হয়নি",
+                onClick = { viewModel.performManualBackup() },
+                trailing = {
+                    if (state.isBackingUp) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                    } else if (state.backupSuccess == true) {
+                        Icon(androidx.compose.material.icons.Icons.Default.CheckCircle, contentDescription = null, tint = GreenProfit)
+                    }
+                }
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.FileDownload,
                 title = "ডেটা এক্সপোর্ট",
@@ -299,6 +339,29 @@ fun SettingsScreen(
     DataExportDialog(state, viewModel, context)
     DataImportDialog(state, viewModel)
     DeleteConfirmDialog(state, viewModel)
+    BackupFrequencyDialog(state, viewModel)
+}
+
+@Composable
+private fun BackupFrequencyDialog(state: SettingsState, viewModel: SettingsViewModel) {
+    if (!state.showBackupDialog) return
+    AlertDialog(
+        onDismissRequest = { viewModel.hideBackupDialog() },
+        title = { Text("ব্যাকআপ ফ্রিকোয়েন্সি") },
+        text = {
+            Column {
+                listOf("daily" to "প্রতিদিন", "weekly" to "সাপ্তাহিক").forEach { (key, label) ->
+                    TextButton(
+                        onClick = { viewModel.setBackupFrequency(key); viewModel.hideBackupDialog() },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (state.settings.backupFrequency == key) "✓ $label" else label, modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = { viewModel.hideBackupDialog() }) { Text("বাতিল") } }
+    )
 }
 
 @Composable

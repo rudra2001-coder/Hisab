@@ -19,12 +19,15 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
 import androidx.compose.material.icons.filled.Analytics
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CardMembership
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FileDownload
@@ -37,6 +40,7 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PointOfSale
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
@@ -81,7 +85,10 @@ fun MoreScreen(
     onNavigateToExpenses: () -> Unit,
     onNavigateToDailyClose: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onNavigateToAccounting: () -> Unit,
+    onNavigateToReports: () -> Unit,
+    onNavigateToExport: () -> Unit
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
@@ -119,16 +126,34 @@ fun MoreScreen(
                 onClick = onNavigateToExpenses
             ),
             MoreMenuItem(
+                icon = Icons.Default.AccountBalance,
+                title = "হিসাব খাতা",
+                subtitle = "ক্যাশ বুক ও লেজার",
+                onClick = onNavigateToAccounting
+            ),
+            MoreMenuItem(
                 icon = Icons.Default.CalendarMonth,
                 title = "দৈনিক ক্লোজ",
                 subtitle = "দিন শেষে হিসাব বন্ধ করুন",
                 onClick = onNavigateToDailyClose
             ),
             MoreMenuItem(
-                icon = Icons.Default.Analytics,
-                title = "রিপোর্ট",
-                subtitle = "বিক্রয় বিশ্লেষণ ও রিপোর্ট",
+                icon = Icons.Default.BarChart,
+                title = "বিশ্লেষণ",
+                subtitle = "বিক্রয় বিশ্লেষণ ও চার্ট",
                 onClick = onNavigateToAnalytics
+            ),
+            MoreMenuItem(
+                icon = Icons.Default.ReceiptLong,
+                title = "রিপোর্টস",
+                subtitle = "বিস্তারিত রিপোর্ট ও পিডিএফ",
+                onClick = onNavigateToReports
+            ),
+            MoreMenuItem(
+                icon = Icons.Default.CloudUpload,
+                title = "ব্যাকআপ ও এক্সপোর্ট",
+                subtitle = "ডেটা ব্যাকআপ ও এক্সপোর্ট",
+                onClick = onNavigateToExport
             ),
             MoreMenuItem(
                 icon = Icons.Default.Settings,
