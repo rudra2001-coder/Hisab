@@ -85,7 +85,7 @@ class DailyCloseViewModel @Inject constructor(
                 .sumOf { it.totalAmount }
             val newDues = allTodayTxs.filter {
                 it.type == com.rudra.hisab.data.local.entity.TransactionType.SALE &&
-                        it.paymentType != com.rudra.hisab.data.local.entity.PaymentStatus.CASH
+                        it.paymentType != com.rudra.hisab.data.local.entity.SalePaymentType.CASH
             }.sumOf { it.totalAmount - it.paidAmount }
 
             val sevenDaysAgo = now.minusDays(7)

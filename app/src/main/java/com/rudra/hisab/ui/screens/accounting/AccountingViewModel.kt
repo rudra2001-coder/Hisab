@@ -79,16 +79,14 @@ class AccountingViewModel @Inject constructor(
 
     private fun observeBalances() {
         viewModelScope.launch {
-            ledgerEntryRepository.getAccountBalance(LedgerAccountType.CUSTOMER)
-                .collect { _uiState.value = _uiState.value.copy(customerBalance = it) }
-        }
-        viewModelScope.launch {
-            ledgerEntryRepository.getAccountBalance(LedgerAccountType.SUPPLIER)
-                .collect { _uiState.value = _uiState.value.copy(supplierBalance = it) }
-        }
-        viewModelScope.launch {
-            ledgerEntryRepository.getAccountBalance(LedgerAccountType.GENERAL)
-                .collect { _uiState.value = _uiState.value.copy(generalBalance = it) }
+            val customer = ledgerEntryRepository.getAccountBalance(LedgerAccountType.CUSTOMER)
+            val supplier = ledgerEntryRepository.getAccountBalance(LedgerAccountType.SUPPLIER)
+            val general = ledgerEntryRepository.getAccountBalance(LedgerAccountType.GENERAL)
+            _uiState.value = _uiState.value.copy(
+                customerBalance = customer,
+                supplierBalance = supplier,
+                generalBalance = general
+            )
         }
     }
 

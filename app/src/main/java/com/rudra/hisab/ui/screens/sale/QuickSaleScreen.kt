@@ -85,7 +85,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rudra.hisab.data.local.entity.CustomerEntity
-import com.rudra.hisab.data.local.entity.PaymentStatus
+import com.rudra.hisab.data.local.entity.SalePaymentType
 import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.ui.theme.BlueInfo
@@ -472,7 +472,7 @@ private fun SaleBottomSheetContent(
     onDigit: (String) -> Unit,
     onBackspace: () -> Unit,
     onClear: () -> Unit,
-    onPaymentTypeChange: (PaymentType) -> Unit,
+    onPaymentTypeChange: (SalePaymentType) -> Unit,
     onPaidAmountChange: (String) -> Unit,
     onCustomerSelect: (CustomerEntity?) -> Unit,
     onCustomerSearchChange: (String) -> Unit,
@@ -526,7 +526,7 @@ private fun SaleTabContent(
     onDigit: (String) -> Unit,
     onBackspace: () -> Unit,
     onClear: () -> Unit,
-    onPaymentTypeChange: (PaymentType) -> Unit,
+    onPaymentTypeChange: (SalePaymentType) -> Unit,
     onPaidAmountChange: (String) -> Unit,
     onCustomerSelect: (CustomerEntity?) -> Unit,
     onCustomerSearchChange: (String) -> Unit,
@@ -585,7 +585,7 @@ private fun SaleTabContent(
         onChange = onPaymentTypeChange
     )
 
-    if (state.paymentType == PaymentStatus.PARTIAL) {
+    if (state.paymentType == SalePaymentType.PARTIAL) {
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = state.paidAmount,
@@ -737,7 +737,7 @@ private fun CartBottomSheetContent(
     onUpdateQuantity: (Long, Double) -> Unit,
     onRemoveItem: (Long) -> Unit,
     onClearCart: () -> Unit,
-    onPaymentTypeChange: (PaymentType) -> Unit,
+    onPaymentTypeChange: (SalePaymentType) -> Unit,
     onPaidAmountChange: (String) -> Unit,
     onCustomerSelect: (CustomerEntity?) -> Unit,
     onCustomerSearchChange: (String) -> Unit,
@@ -841,7 +841,7 @@ private fun CartBottomSheetContent(
                 onChange = onPaymentTypeChange
             )
 
-            if (state.paymentType == PaymentStatus.PARTIAL) {
+            if (state.paymentType == SalePaymentType.PARTIAL) {
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.paidAmount,
@@ -1050,8 +1050,8 @@ private fun NumberPad(
 
 @Composable
 private fun PaymentTypeSelector(
-    selected: PaymentStatus,
-    onChange: (PaymentStatus) -> Unit
+    selected: SalePaymentType,
+    onChange: (SalePaymentType) -> Unit
 ) {
     Column {
         Text(
@@ -1066,26 +1066,26 @@ private fun PaymentTypeSelector(
         ) {
             PaymentTypeButton(
                 label = "নগদ",
-                selected = selected == PaymentStatus.CASH,
+                selected = selected == SalePaymentType.CASH,
                 color = GreenProfit,
                 containerColor = GreenProfitContainer,
-                onClick = { onChange(PaymentStatus.CASH) },
+                onClick = { onChange(SalePaymentType.CASH) },
                 modifier = Modifier.weight(1f)
             )
             PaymentTypeButton(
                 label = "বাকি",
-                selected = selected == PaymentStatus.CREDIT,
+                selected = selected == SalePaymentType.CREDIT,
                 color = OrangeDue,
                 containerColor = OrangeDue.copy(alpha = 0.15f),
-                onClick = { onChange(PaymentStatus.CREDIT) },
+                onClick = { onChange(SalePaymentType.CREDIT) },
                 modifier = Modifier.weight(1f)
             )
             PaymentTypeButton(
                 label = "আংশিক",
-                selected = selected == PaymentStatus.PARTIAL,
+                selected = selected == SalePaymentType.PARTIAL,
                 color = BlueInfo,
                 containerColor = BlueInfoContainer,
-                onClick = { onChange(PaymentStatus.PARTIAL) },
+                onClick = { onChange(SalePaymentType.PARTIAL) },
                 modifier = Modifier.weight(1f)
             )
         }

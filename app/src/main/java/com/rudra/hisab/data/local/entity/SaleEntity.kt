@@ -30,14 +30,8 @@ data class SaleEntity(
     val discountAmount: Double = 0.0,
     val paidAmount: Double = 0.0,
     val dueAmount: Double = 0.0,
-    val paymentMethod: PaymentMethod = PaymentMethod.CASH,
+    val paymentMethod: SalePaymentType = SalePaymentType.CASH,
     val paymentStatus: PaymentStatus = PaymentStatus.PAID,
     val note: String = "",
     val createdAt: Long = System.currentTimeMillis()
 )
-
-enum class PaymentStatus {
-    PAID,
-    PARTIAL,
-    DUE
-}

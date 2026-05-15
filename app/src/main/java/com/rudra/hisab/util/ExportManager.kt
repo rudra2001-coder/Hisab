@@ -12,6 +12,7 @@ import com.rudra.hisab.data.repository.ExpenseRepository
 import com.rudra.hisab.data.repository.ProductRepository
 import com.rudra.hisab.data.repository.SaleRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import org.apache.poi.ss.usermodel.BorderStyle
 import org.apache.poi.ss.usermodel.FillPatternType
@@ -23,12 +24,13 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ExportManager @Inject constructor(
-    private val context: Context
+    @ApplicationContext private val context: Context
 ) {
 
     suspend fun generateReport(

@@ -58,7 +58,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.rudra.hisab.data.local.entity.CustomerEntity
-import com.rudra.hisab.data.local.entity.PaymentStatus
+import com.rudra.hisab.data.local.entity.SalePaymentType
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
 import com.rudra.hisab.ui.theme.GreenProfit
@@ -335,7 +335,7 @@ private fun TransactionRow(
     val dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
     val isSale = transaction.type == TransactionType.SALE
     val isPayment = transaction.type == TransactionType.PAYMENT
-    val isCredit = transaction.paymentType != PaymentStatus.CASH
+    val isCredit = transaction.paymentType != SalePaymentType.CASH
 
     val description = when {
         isPayment -> "টাকা গ্রহণ"

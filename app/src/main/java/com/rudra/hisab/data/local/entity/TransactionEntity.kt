@@ -13,12 +13,6 @@ enum class TransactionType {
     STOCK_LOSS
 }
 
-enum class PaymentStatus {
-    CASH,
-    CREDIT,
-    PARTIAL
-}
-
 @Entity(
     tableName = "transactions",
     foreignKeys = [
@@ -46,7 +40,7 @@ data class TransactionEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val type: TransactionType,
-    val paymentType: PaymentStatus = PaymentStatus.CASH,
+    val paymentType: SalePaymentType = SalePaymentType.CASH,
     val productId: Long? = null,
     val customerId: Long? = null,
     val quantity: Double = 1.0,

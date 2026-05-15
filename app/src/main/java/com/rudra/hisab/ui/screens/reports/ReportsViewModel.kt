@@ -8,6 +8,7 @@ import com.rudra.hisab.data.repository.DailySnapshotRepository
 import com.rudra.hisab.data.repository.ExpenseRepository
 import com.rudra.hisab.data.repository.ProductRepository
 import com.rudra.hisab.data.repository.SaleRepository
+import com.rudra.hisab.util.ExportFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -35,8 +36,6 @@ data class ProfitLossData(
     val netProfit: Double = 0.0,
     val profitMargin: Double = 0.0
 )
-
-import com.rudra.hisab.util.ExportFormat
 
 data class ReportsUiState(
     val startDate: Long = 0L,
@@ -102,7 +101,7 @@ class ReportsViewModel @Inject constructor(
 
             // Low stock — suspend snapshot
             val lowStock = productRepository.getLowStockProductsOnce()
-            val stockValue = productRepository.getTotalStockValue()
+            val stockValue = productRepository.getTotalStockValue().first() ?: 0.0
 
             _uiState.value = _uiState.value.copy(
                 salesReport = SalesReportData(
@@ -125,7 +124,7 @@ class ReportsViewModel @Inject constructor(
                 totalDues = dues,
                 dueCustomerCount = dueCount,
                 lowStockCount = lowStock.size,
-                totalStockValue = stockValue ?: 0.0,
+                totalStockValue = stockValue,
                 isLoading = false
             )
         }
