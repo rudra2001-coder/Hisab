@@ -14,6 +14,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.ZoneId
@@ -82,10 +83,13 @@ class AnalyticsViewModel @Inject constructor(
             }
 
             // Slow movers
-            val allProducts = productRepository.getAllProducts().value
-            val slow = allProducts.filter { product ->
+            val allProducts = productRepository.getAllProducts().first()
+            val slow = mutableListOf<ProductEntity>()
+            for (product in allProducts) {
                 val lastSale = transactionRepository.getLastSaleDate(product.id)
-                lastSale == null || lastSale < fourteenDaysAgo
+                if (lastSale == null || lastSale < fourteenDaysAgo) {
+                    slow.add(product)
+                }
             }
             _state.value = _state.value.copy(slowMovers = slow)
 

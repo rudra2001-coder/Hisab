@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -56,7 +57,7 @@ class DashboardViewModel @Inject constructor(
             val startOfDay = now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
             val endOfDay = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-            val settings = appPreferences.settings.value
+            val settings = appPreferences.settings.first()
 
             val todaySales = transactionRepository.getTodaySalesTotal(startOfDay, endOfDay)
             val todayExpenses = expenseRepository.getTodayExpensesTotal(startOfDay, endOfDay)
@@ -68,7 +69,7 @@ class DashboardViewModel @Inject constructor(
             }
 
             customerRepository.getTotalDues().collect { dues ->
-                val lowStock = productRepository.getLowStockProducts().value
+                val lowStock = productRepository.getLowStockProducts().first()
                 _state.value = _state.value.copy(
                     shopName = settings.shopName,
                     todaySales = todaySales,

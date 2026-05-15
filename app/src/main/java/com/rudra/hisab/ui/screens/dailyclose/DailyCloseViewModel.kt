@@ -12,6 +12,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -62,7 +63,7 @@ class DailyCloseViewModel @Inject constructor(
             val expenses = expenseRepository.getTodayExpensesTotal(startOfDay, endOfDay)
             val creditGiven = transactionRepository.getTodayCreditGiven(startOfDay, endOfDay)
             val cashReceived = sales - creditGiven
-            val stockValue = productRepository.getTotalStockValue().value ?: 0.0
+            val stockValue = productRepository.getTotalStockValue().first() ?: 0.0
 
             _state.value = _state.value.copy(
                 totalSales = sales,
