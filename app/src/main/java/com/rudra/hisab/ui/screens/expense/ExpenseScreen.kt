@@ -135,7 +135,7 @@ fun ExpenseScreen(
                     items(expenses, key = { it.id }) { expense ->
                         ExpenseCard(
                             expense = expense,
-                            onDelete = { viewModel.deleteExpense(expense) }
+                            onDelete = { viewModel.requestDeleteExpense(expense) }
                         )
                     }
                 }

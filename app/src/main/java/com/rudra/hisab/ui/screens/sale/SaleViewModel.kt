@@ -30,7 +30,9 @@ data class SaleState(
     val selectedCustomerId: Long? = null,
     val isSaving: Boolean = false,
     val saleComplete: Boolean = false,
-    val searchQuery: String = ""
+    val searchQuery: String = "",
+    val todaySalesTotal: Double = 0.0,
+    val todaySaleCount: Int = 0
 )
 
 @HiltViewModel
@@ -46,15 +48,23 @@ class SaleViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
+            val now = java.time.LocalDate.now()
+            val startOfDay = now.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val endOfDay = now.atTime(java.time.LocalTime.MAX).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+
             combine(
                 productRepository.getAllProducts(),
-                customerRepository.getAllCustomers()
-            ) { products, customers ->
-                Pair(products, customers)
-            }.collect { (products, customers) ->
+                customerRepository.getAllCustomers(),
+                transactionRepository.getTodaySalesFlow(startOfDay, endOfDay)
+            ) { products, customers, salesFlow ->
+                Triple(products, customers, salesFlow)
+            }.collect { (products, customers, salesTotal) ->
+                val saleCount = transactionRepository.getTodaySaleCount(startOfDay, endOfDay)
                 _state.value = _state.value.copy(
                     products = products,
-                    customers = customers
+                    customers = customers,
+                    todaySalesTotal = salesTotal,
+                    todaySaleCount = saleCount
                 )
             }
         }

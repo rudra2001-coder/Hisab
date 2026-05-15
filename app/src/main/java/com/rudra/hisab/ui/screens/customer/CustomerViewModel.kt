@@ -8,6 +8,7 @@ import com.rudra.hisab.data.local.entity.CustomerEntity
 import com.rudra.hisab.data.local.entity.PaymentType
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
+import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.CustomerRepository
 import com.rudra.hisab.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,6 +16,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.ZoneId
 import javax.inject.Inject
 
 data class TransactionWithBalance(
@@ -43,14 +47,19 @@ data class CustomerDetailState(
     val paymentNote: String = "",
     val isSaving: Boolean = false,
     val showOverpaymentWarning: Boolean = false,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    val creditLimit: Double = 0.0,
+    val creditLimitExceeded: Boolean = false,
+    val showTransactionDeleteConfirm: TransactionEntity? = null,
+    val deleteWindowHours: Int = 24
 )
 
 @HiltViewModel
 class CustomerViewModel @Inject constructor(
     private val customerRepository: CustomerRepository,
     private val transactionRepository: TransactionRepository,
-    private val database: HisabDatabase
+    private val database: HisabDatabase,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _listState = MutableStateFlow(CustomerListState())
@@ -68,6 +77,14 @@ class CustomerViewModel @Inject constructor(
         viewModelScope.launch {
             customerRepository.getTotalDues().collect { dues ->
                 _listState.value = _listState.value.copy(totalDues = dues ?: 0.0)
+            }
+        }
+        viewModelScope.launch {
+            appPreferences.settings.collect { settings ->
+                _detailState.value = _detailState.value.copy(
+                    creditLimit = settings.defaultCreditLimit,
+                    deleteWindowHours = settings.deleteWindowHours
+                )
             }
         }
     }
@@ -134,7 +151,12 @@ class CustomerViewModel @Inject constructor(
     fun loadCustomerDetail(customerId: Long) {
         viewModelScope.launch {
             val customer = customerRepository.getCustomerById(customerId)
-            _detailState.value = _detailState.value.copy(customer = customer)
+            val limit = _detailState.value.creditLimit
+            val exceeded = limit > 0 && customer != null && customer.totalDue > limit
+            _detailState.value = _detailState.value.copy(
+                customer = customer,
+                creditLimitExceeded = exceeded
+            )
         }
         viewModelScope.launch {
             transactionRepository.getTransactionsByCustomer(customerId).collect { txs ->
@@ -244,6 +266,53 @@ class CustomerViewModel @Inject constructor(
                 )
             }
         }
+    }
+
+    fun requestDeleteTransaction(transaction: TransactionEntity) {
+        _detailState.value = _detailState.value.copy(showTransactionDeleteConfirm = transaction)
+    }
+
+    fun confirmDeleteTransaction() {
+        val t = _detailState.value.showTransactionDeleteConfirm ?: return
+        val windowMs = _detailState.value.deleteWindowHours * 60 * 60 * 1000L
+        val now = System.currentTimeMillis()
+        if (now - t.createdAt > windowMs) {
+            _detailState.value = _detailState.value.copy(
+                errorMessage = "শুধুমাত্র ${_detailState.value.deleteWindowHours} ঘন্টার মধ্যে লেনদেন মুছতে পারবেন",
+                showTransactionDeleteConfirm = null
+            )
+            return
+        }
+        viewModelScope.launch {
+            try {
+                database.withTransaction {
+                    if (t.type == TransactionType.SALE && t.paymentType != PaymentType.CASH) {
+                        val dueAmount = t.totalAmount - t.paidAmount
+                        if (t.customerId != null && dueAmount > 0) {
+                            customerRepository.removeDue(t.customerId, dueAmount)
+                        }
+                        if (t.productId != null) {
+                            com.rudra.hisab.data.local.entity.ProductEntity::class
+                        }
+                    }
+                    if (t.type == TransactionType.PAYMENT && t.customerId != null) {
+                        customerRepository.addDue(t.customerId, t.totalAmount)
+                    }
+                    transactionRepository.deleteById(t.id)
+                }
+                _detailState.value = _detailState.value.copy(showTransactionDeleteConfirm = null)
+                if (t.customerId != null) loadCustomerDetail(t.customerId)
+            } catch (e: Exception) {
+                _detailState.value = _detailState.value.copy(
+                    errorMessage = "মুছতে ব্যর্থ: ${e.localizedMessage}",
+                    showTransactionDeleteConfirm = null
+                )
+            }
+        }
+    }
+
+    fun cancelDeleteTransaction() {
+        _detailState.value = _detailState.value.copy(showTransactionDeleteConfirm = null)
     }
 
     fun getFilteredCustomers(): List<CustomerEntity> {

@@ -18,6 +18,7 @@ class ProductRepository @Inject constructor(
     suspend fun getProductById(id: Long): ProductEntity? = productDao.getProductById(id)
 
     fun getLowStockProducts(): Flow<List<ProductEntity>> = productDao.getLowStockProducts()
+    suspend fun getLowStockProductsOnce(): List<ProductEntity> = productDao.getLowStockProductsOnce()
 
     fun searchProducts(query: String): Flow<List<ProductEntity>> = productDao.searchProducts(query)
 

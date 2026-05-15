@@ -19,6 +19,8 @@ class TransactionRepository @Inject constructor(
 
     fun getTransactionsByProduct(productId: Long): Flow<List<TransactionEntity>> =
         transactionDao.getTransactionsByProduct(productId)
+    suspend fun getTransactionsByProductOnce(productId: Long): List<TransactionEntity> =
+        transactionDao.getTransactionsByProductOnce(productId)
 
     fun getTransactionsByCustomer(customerId: Long): Flow<List<TransactionEntity>> =
         transactionDao.getTransactionsByCustomer(customerId)

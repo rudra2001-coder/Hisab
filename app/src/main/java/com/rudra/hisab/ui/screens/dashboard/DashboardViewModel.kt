@@ -2,6 +2,7 @@ package com.rudra.hisab.ui.screens.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.CustomerRepository
 import com.rudra.hisab.data.repository.ExpenseRepository
@@ -16,6 +17,8 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import javax.inject.Inject
 
 data class DashboardState(
@@ -24,8 +27,14 @@ data class DashboardState(
     val todayExpenses: Double = 0.0,
     val totalDues: Double = 0.0,
     val lowStockCount: Int = 0,
+    val lowStockProducts: List<ProductEntity> = emptyList(),
     val todaySaleCount: Int = 0,
-    val isLoading: Boolean = true
+    val todayPurchases: Double = 0.0,
+    val todayCreditGiven: Double = 0.0,
+    val quickActions: List<String> = listOf("sale", "stock", "expense", "customer"),
+    val isLoading: Boolean = true,
+    val dateLabel: String = "",
+    val isBangla: Boolean = true
 ) {
     val netProfit: Double get() = todaySales - todayExpenses
 }
@@ -53,7 +62,17 @@ class DashboardViewModel @Inject constructor(
 
         viewModelScope.launch {
             appPreferences.settings.collect { settings ->
-                _state.value = _state.value.copy(shopName = settings.shopName)
+                val formatter = DateTimeFormatter.ofPattern(
+                    if (settings.isBangla) "EEEE, dd MMMM yyyy" else "EEEE, MMMM dd, yyyy",
+                    if (settings.isBangla) Locale.forLanguageTag("bn") else Locale.ENGLISH
+                )
+                val actions = settings.quickActions.split(",").map { it.trim() }
+                _state.value = _state.value.copy(
+                    shopName = settings.shopName,
+                    quickActions = actions,
+                    isBangla = settings.isBangla,
+                    dateLabel = now.format(formatter)
+                )
             }
         }
 
@@ -64,13 +83,29 @@ class DashboardViewModel @Inject constructor(
             val expensesFlow = expenseRepository.getTodayExpensesFlow(startOfDay, endOfDay)
             val duesFlow = customerRepository.getTotalDues()
             val lowStockFlow = productRepository.getLowStockProducts()
+            val purchasesFlow = transactionRepository.getTodayPurchasesFlow(startOfDay, endOfDay)
+            val creditFlow = transactionRepository.getTodayCreditFlow(startOfDay, endOfDay)
+            val saleCount = transactionRepository.getTodaySaleCount(startOfDay, endOfDay)
 
-            combine(salesFlow, expensesFlow, duesFlow, lowStockFlow) { sales, expenses, dues, lowStock ->
+            combine(
+                salesFlow, expensesFlow, duesFlow, lowStockFlow, purchasesFlow, creditFlow
+            ) { args: Array<Any?> ->
+                val sales = args[0] as Double
+                val expenses = args[1] as Double
+                val dues = args[2] as Double?
+                @Suppress("UNCHECKED_CAST")
+                val lowStock = args[3] as List<ProductEntity>
+                val purchases = args[4] as Double
+                val credit = args[5] as Double
                 _state.value.copy(
                     todaySales = sales,
                     todayExpenses = expenses,
                     totalDues = dues ?: 0.0,
                     lowStockCount = lowStock.size,
+                    lowStockProducts = lowStock,
+                    todayPurchases = purchases,
+                    todayCreditGiven = credit,
+                    todaySaleCount = saleCount,
                     isLoading = false
                 )
             }.collect { newState ->

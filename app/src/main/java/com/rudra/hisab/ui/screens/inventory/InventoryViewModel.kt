@@ -29,7 +29,13 @@ data class InventoryState(
     val stockDialogProduct: ProductEntity? = null,
     val stockDialogIsAdd: Boolean = true,
     val stockQuantity: String = "",
-    val isSaving: Boolean = false
+    val stockNote: String = "",
+    val isSaving: Boolean = false,
+    val showDeleteConfirm: ProductEntity? = null,
+    val deletedProduct: ProductEntity? = null,
+    val showPriceHistory: ProductEntity? = null,
+    val priceHistory: List<TransactionEntity> = emptyList(),
+    val productImageUri: String = ""
 )
 
 @HiltViewModel
@@ -80,7 +86,8 @@ class InventoryViewModel @Inject constructor(
             showStockDialog = true,
             stockDialogProduct = product,
             stockDialogIsAdd = isAdd,
-            stockQuantity = ""
+            stockQuantity = "",
+            stockNote = ""
         )
     }
 
@@ -88,12 +95,21 @@ class InventoryViewModel @Inject constructor(
         _state.value = _state.value.copy(
             showStockDialog = false,
             stockDialogProduct = null,
-            stockQuantity = ""
+            stockQuantity = "",
+            stockNote = ""
         )
     }
 
     fun setStockQuantity(qty: String) {
         _state.value = _state.value.copy(stockQuantity = qty)
+    }
+
+    fun setStockNote(note: String) {
+        _state.value = _state.value.copy(stockNote = note)
+    }
+
+    fun setProductImageUri(uri: String) {
+        _state.value = _state.value.copy(productImageUri = uri)
     }
 
     fun addProduct(name: String, nameBangla: String, unit: String, buyPrice: Double, sellPrice: Double, stock: Double, lowStock: Double, categoryId: Long?) {
@@ -120,12 +136,23 @@ class InventoryViewModel @Inject constructor(
         val product = s.stockDialogProduct ?: return
         val qty = s.stockQuantity.toDoubleOrNull() ?: return
         if (qty <= 0) return
+        if (s.stockNote.isBlank()) return
 
         viewModelScope.launch {
             try {
                 database.withTransaction {
                     if (s.stockDialogIsAdd) {
                         productRepository.addStock(product.id, qty)
+                        transactionRepository.insert(
+                            TransactionEntity(
+                                type = TransactionType.PURCHASE,
+                                productId = product.id,
+                                quantity = qty,
+                                unitPrice = product.buyPrice,
+                                totalAmount = product.buyPrice * qty,
+                                notes = s.stockNote
+                            )
+                        )
                     } else {
                         productRepository.removeStock(product.id, qty)
                         transactionRepository.insert(
@@ -135,7 +162,7 @@ class InventoryViewModel @Inject constructor(
                                 quantity = qty,
                                 unitPrice = 0.0,
                                 totalAmount = 0.0,
-                                notes = "Stock loss adjustment"
+                                notes = s.stockNote
                             )
                         )
                     }
@@ -146,10 +173,45 @@ class InventoryViewModel @Inject constructor(
         }
     }
 
-    fun deleteProduct(product: ProductEntity) {
+    fun requestDeleteProduct(product: ProductEntity) {
+        _state.value = _state.value.copy(showDeleteConfirm = product)
+    }
+
+    fun confirmDelete() {
+        val product = _state.value.showDeleteConfirm ?: return
         viewModelScope.launch {
             productRepository.delete(product)
+            _state.value = _state.value.copy(
+                showDeleteConfirm = null,
+                deletedProduct = product
+            )
         }
+    }
+
+    fun cancelDelete() {
+        _state.value = _state.value.copy(showDeleteConfirm = null)
+    }
+
+    fun undoDelete() {
+        val product = _state.value.deletedProduct ?: return
+        viewModelScope.launch {
+            productRepository.insert(product)
+            _state.value = _state.value.copy(deletedProduct = null)
+        }
+    }
+
+    fun showPriceHistory(product: ProductEntity) {
+        viewModelScope.launch {
+            val history = transactionRepository.getTransactionsByProductOnce(product.id)
+            _state.value = _state.value.copy(
+                showPriceHistory = product,
+                priceHistory = history
+            )
+        }
+    }
+
+    fun hidePriceHistory() {
+        _state.value = _state.value.copy(showPriceHistory = null, priceHistory = emptyList())
     }
 
     fun getFilteredProducts(): List<ProductEntity> {

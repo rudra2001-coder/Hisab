@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.rudra.hisab.data.local.entity.CustomerEntity
+import com.rudra.hisab.ui.theme.BlueInfo
 import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.OrangeDue
 import com.rudra.hisab.ui.theme.RedExpense
@@ -81,14 +82,41 @@ fun CustomerListScreen(
                 fontWeight = FontWeight.Bold
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                text = "মোট বাকি: ${CurrencyFormatter.format(state.totalDues)}",
-                style = MaterialTheme.typography.titleLarge,
-                color = OrangeDue,
-                fontWeight = FontWeight.SemiBold
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = BlueInfo.copy(alpha = 0.08f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("মোট গ্রাহক", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(state.customers.size.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = BlueInfo)
+                    }
+                }
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = OrangeDue.copy(alpha = 0.08f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("মোট বাকি", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(CurrencyFormatter.format(state.totalDues), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = OrangeDue)
+                    }
+                }
+                val paidCount = state.customers.count { it.totalDue <= 0 }
+                Card(
+                    modifier = Modifier.weight(1f),
+                    colors = CardDefaults.cardColors(containerColor = GreenProfit.copy(alpha = 0.08f))
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text("পরিশোধিত", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(paidCount.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = GreenProfit)
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(12.dp))
 

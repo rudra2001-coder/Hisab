@@ -6,6 +6,7 @@ import dagger.hilt.android.HiltAndroidApp
 
 @HiltAndroidApp
 class HisabApp : Application() {
+
     override fun onCreate() {
         super.onCreate()
         ReminderWorker.schedule(this)

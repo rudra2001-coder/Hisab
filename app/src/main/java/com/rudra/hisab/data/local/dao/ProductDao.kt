@@ -23,6 +23,9 @@ interface ProductDao {
     @Query("SELECT * FROM products WHERE currentStock <= lowStockThreshold AND isDeleted = 0 ORDER BY currentStock ASC")
     fun getLowStockProducts(): Flow<List<ProductEntity>>
 
+    @Query("SELECT * FROM products WHERE currentStock <= lowStockThreshold AND isDeleted = 0 ORDER BY currentStock ASC")
+    suspend fun getLowStockProductsOnce(): List<ProductEntity>
+
     @Query("SELECT * FROM products WHERE (name LIKE '%' || :query || '%' OR nameBangla LIKE '%' || :query || '%') AND isDeleted = 0")
     fun searchProducts(query: String): Flow<List<ProductEntity>>
 

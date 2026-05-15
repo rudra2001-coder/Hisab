@@ -6,24 +6,30 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,15 +37,21 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -48,118 +60,136 @@ import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.GreenProfitContainer
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun OnboardingScreen(
-    viewModel: OnboardingViewModel,
-    onComplete: () -> Unit
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    onNavigateToHome: () -> Unit = {}
 ) {
     val state by viewModel.state.collectAsState()
 
     if (state.isComplete) {
-        onComplete()
+        onNavigateToHome()
         return
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Spacer(modifier = Modifier.height(32.dp))
+    Scaffold(
+        topBar = {
+            if (state.currentStep > 1 && !state.isLoading) {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = {
+                        IconButton(onClick = { viewModel.previousStep() }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background
+                    )
+                )
+            }
+        }
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(horizontal = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(modifier = Modifier.height(16.dp))
 
-        Text(
-            text = "হিসাব",
-            style = MaterialTheme.typography.displayLarge,
-            color = GreenProfit,
-            fontWeight = FontWeight.Bold
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Text(
-            text = "আপনার দোকানের হিসাব রাখুন সহজে",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(32.dp))
-
-        AnimatedContent(
-            targetState = state.currentStep,
-            transitionSpec = { fadeIn() togetherWith fadeOut() },
-            label = "step"
-        ) { step ->
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
-                horizontalAlignment = Alignment.CenterHorizontally
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                when (step) {
-                    1 -> StepShopName(
-                        shopName = state.shopName,
-                        onShopNameChange = viewModel::setShopName
+                val totalSteps = 3
+                for (i in 1..totalSteps) {
+                    val isActive = i <= state.currentStep
+                    val color by animateColorAsState(
+                        targetValue = if (isActive) GreenProfit else MaterialTheme.colorScheme.surfaceVariant,
+                        label = "stepColor"
                     )
-                    2 -> StepCategoryPicker(
-                        categories = viewModel.presetCategories,
-                        selectedId = state.selectedCategoryId,
-                        onSelect = viewModel::selectCategory
-                    )
-                    3 -> StepReady(
-                        isLoading = state.isLoading,
-                        onFinish = viewModel::completeOnboarding
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(6.dp)
+                            .clip(RoundedCornerShape(3.dp))
+                            .background(color)
                     )
                 }
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "${state.currentStep}/$totalSteps",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
-        if (state.currentStep == 1) {
-            Button(
-                onClick = { viewModel.nextStep() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = state.shopName.isNotBlank()
-            ) {
-                Text("পরবর্তী", style = MaterialTheme.typography.titleLarge)
-                Icon(Icons.Default.ChevronRight, contentDescription = null)
-            }
-        }
-
-        if (state.currentStep == 2) {
-            Button(
-                onClick = { viewModel.nextStep() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                enabled = state.selectedCategoryId != null
-            ) {
-                Text("পরবর্তী", style = MaterialTheme.typography.titleLarge)
-                Icon(Icons.Default.ChevronRight, contentDescription = null)
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedButton(
-                onClick = { viewModel.previousStep() },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Icon(Icons.Default.ChevronLeft, contentDescription = null)
-                Text("পিছনে", style = MaterialTheme.typography.titleMedium)
-            }
-        }
-
-        if (state.currentStep == 3) {
-            if (!state.isLoading) {
-                OutlinedButton(
-                    onClick = { viewModel.previousStep() },
-                    modifier = Modifier.fillMaxWidth()
+            AnimatedContent(
+                targetState = state.currentStep,
+                transitionSpec = { fadeIn() togetherWith fadeOut() },
+                label = "step"
+            ) { step ->
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Default.ChevronLeft, contentDescription = null)
-                    Text("পিছনে", style = MaterialTheme.typography.titleMedium)
+                    when (step) {
+                        1 -> StepShopName(
+                            shopName = state.shopName,
+                            onShopNameChange = viewModel::setShopName
+                        )
+                        2 -> StepCategoryPicker(
+                            categories = viewModel.presetCategories,
+                            selectedId = state.selectedCategoryId,
+                            onSelect = viewModel::selectCategory
+                        )
+                        3 -> StepReady(
+                            isLoading = state.isLoading,
+                            onFinish = viewModel::completeOnboarding
+                        )
+                    }
                 }
             }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (state.currentStep == 1) {
+                Button(
+                    onClick = { viewModel.nextStep() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = state.shopName.isNotBlank()
+                ) {
+                    Text("পরবর্তী", style = MaterialTheme.typography.titleLarge)
+                    Icon(Icons.Default.ChevronRight, contentDescription = null)
+                }
+            }
+
+            if (state.currentStep == 2) {
+                Button(
+                    onClick = { viewModel.nextStep() },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    enabled = state.selectedCategoryId != null
+                ) {
+                    Text("পরবর্তী", style = MaterialTheme.typography.titleLarge)
+                    Icon(Icons.Default.ChevronRight, contentDescription = null)
+                }
+            }
+
+            if (state.currentStep == 3 && !state.isLoading) {
+                Spacer(modifier = Modifier.height(8.dp))
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }

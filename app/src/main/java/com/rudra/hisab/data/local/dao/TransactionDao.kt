@@ -20,6 +20,8 @@ interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE productId = :productId ORDER BY createdAt DESC")
     fun getTransactionsByProduct(productId: Long): Flow<List<TransactionEntity>>
+    @Query("SELECT * FROM transactions WHERE productId = :productId ORDER BY createdAt DESC")
+    suspend fun getTransactionsByProductOnce(productId: Long): List<TransactionEntity>
 
     @Query("SELECT * FROM transactions WHERE customerId = :customerId ORDER BY createdAt DESC")
     fun getTransactionsByCustomer(customerId: Long): Flow<List<TransactionEntity>>

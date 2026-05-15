@@ -17,9 +17,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
+import java.util.Locale
 import javax.inject.Inject
 
 enum class ExpenseFilter { ALL, TODAY, WEEK, MONTH }
@@ -35,7 +39,9 @@ data class ExpenseState(
     val description: String = "",
     val isSaving: Boolean = false,
     val deletedExpense: ExpenseEntity? = null,
-    val showUndoSnackbar: Boolean = false
+    val showUndoSnackbar: Boolean = false,
+    val receiptImageUri: String = "",
+    val showDeleteConfirm: ExpenseEntity? = null
 )
 
 @HiltViewModel
@@ -69,14 +75,14 @@ class ExpenseViewModel @Inject constructor(
                     Pair(s, e)
                 }
                 ExpenseFilter.WEEK -> {
-                    val weekAgo = now.minusDays(7)
-                    val s = weekAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val weekStart = now.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                    val s = weekStart.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val e = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
                     Pair(s, e)
                 }
                 ExpenseFilter.MONTH -> {
-                    val monthAgo = now.minusDays(30)
-                    val s = monthAgo.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val monthStart = now.withDayOfMonth(1)
+                    val s = monthStart.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
                     val e = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
                     Pair(s, e)
                 }
@@ -85,9 +91,9 @@ class ExpenseViewModel @Inject constructor(
 
             expenseRepository.getExpensesByDateRange(start, end).collect { expenses ->
                 val total = expenses.sumOf { it.amount }
+                val formatter = DateTimeFormatter.ofPattern("dd MMM, EEE", Locale.forLanguageTag("bn"))
                 val grouped = expenses.groupBy {
-                    java.text.SimpleDateFormat("dd MMM yyyy", java.util.Locale.forLanguageTag("bn"))
-                        .format(java.util.Date(it.date))
+                    LocalDate.ofEpochDay(it.date / 86400000).format(formatter)
                 }
                 _state.value = _state.value.copy(
                     expenses = expenses,
@@ -121,6 +127,10 @@ class ExpenseViewModel @Inject constructor(
 
     fun setDescription(desc: String) {
         _state.value = _state.value.copy(description = desc)
+    }
+
+    fun setReceiptImageUri(uri: String) {
+        _state.value = _state.value.copy(receiptImageUri = uri)
     }
 
     fun addExpense() {
@@ -157,10 +167,16 @@ class ExpenseViewModel @Inject constructor(
         }
     }
 
-    fun deleteExpense(expense: ExpenseEntity) {
+    fun requestDeleteExpense(expense: ExpenseEntity) {
+        _state.value = _state.value.copy(showDeleteConfirm = expense)
+    }
+
+    fun confirmDeleteExpense() {
+        val expense = _state.value.showDeleteConfirm ?: return
         viewModelScope.launch {
             expenseRepository.delete(expense)
             _state.value = _state.value.copy(
+                showDeleteConfirm = null,
                 deletedExpense = expense,
                 showUndoSnackbar = true
             )
@@ -171,11 +187,15 @@ class ExpenseViewModel @Inject constructor(
         }
     }
 
+    fun cancelDelete() {
+        _state.value = _state.value.copy(showDeleteConfirm = null)
+    }
+
     fun undoDelete() {
         val expense = _state.value.deletedExpense ?: return
         viewModelScope.launch {
             expenseRepository.insert(expense)
-            _state.value = _state.value.copy(deletedExpense = null, showUndoSnackbar = false)
+            _state.value = _state.value.copy(deletedExpense = null, showUndoSnackbar = false, showDeleteConfirm = null)
         }
     }
 }

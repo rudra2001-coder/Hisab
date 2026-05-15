@@ -10,6 +10,9 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 private val LightColorScheme = lightColorScheme(
@@ -56,19 +59,44 @@ private val DarkColorScheme = darkColorScheme(
     outline = OutlineDark
 )
 
+enum class FontSizeScale(val scale: Float, val label: String) {
+    SMALL(0.85f, "ছোট"),
+    MEDIUM(1.0f, "মধ্যম"),
+    LARGE(1.15f, "বড়")
+}
+
+object HisabThemeConfig {
+    var fontScale: FontSizeScale = FontSizeScale.MEDIUM
+    var density: Dp = 0.dp
+}
+
 @Composable
 fun HisabTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: String = "system",
+    fontSize: String = "medium",
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val useDarkTheme = when (themeMode) {
+        "dark" -> true
+        "light" -> false
+        else -> isSystemInDarkTheme()
+    }
+    val colorScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme
+
+    val scale = when (fontSize) {
+        "small" -> FontSizeScale.SMALL
+        "large" -> FontSizeScale.LARGE
+        else -> FontSizeScale.MEDIUM
+    }
+    HisabThemeConfig.fontScale = scale
 
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
             window.statusBarColor = colorScheme.surface.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !useDarkTheme
         }
     }
 
@@ -78,4 +106,8 @@ fun HisabTheme(
         shapes = HisabShapes,
         content = content
     )
+}
+
+fun scaledSize(sp: Int): androidx.compose.ui.unit.TextUnit {
+    return (sp * HisabThemeConfig.fontScale.scale).sp
 }

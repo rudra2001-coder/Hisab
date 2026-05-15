@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 import javax.inject.Inject
 
 data class DailyCloseState(
@@ -36,7 +37,10 @@ data class DailyCloseState(
     val isClosed: Boolean = false,
     val alreadyClosed: Boolean = false,
     val isLoading: Boolean = true,
-    val pastSnapshots: List<DailySnapshotEntity> = emptyList()
+    val pastSnapshots: List<DailySnapshotEntity> = emptyList(),
+    val selectedDate: LocalDate = LocalDate.now(),
+    val showCalendar: Boolean = false,
+    val selectedSnapshot: DailySnapshotEntity? = null
 )
 
 @HiltViewModel
@@ -115,20 +119,53 @@ class DailyCloseViewModel @Inject constructor(
             val now = LocalDate.now()
             val startOfDay = now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-            dailySnapshotRepository.insert(
-                DailySnapshotEntity(
-                    date = startOfDay,
-                    totalSales = s.totalSales,
-                    totalExpenses = s.totalExpenses,
-                    totalPurchases = s.totalPurchases,
-                    cashReceived = s.cashReceived,
-                    creditGiven = s.creditGiven,
-                    netProfit = s.netProfit,
-                    openingStockValue = s.stockValue,
-                    closingStockValue = s.stockValue
+            val existing = dailySnapshotRepository.getSnapshotByDate(startOfDay)
+            if (existing != null) {
+                dailySnapshotRepository.insert(
+                    existing.copy(
+                        totalSales = s.totalSales,
+                        totalExpenses = s.totalExpenses,
+                        totalPurchases = s.totalPurchases,
+                        cashReceived = s.cashReceived,
+                        creditGiven = s.creditGiven,
+                        netProfit = s.netProfit,
+                        closingStockValue = s.stockValue,
+                        createdAt = System.currentTimeMillis()
+                    )
                 )
-            )
-            _state.value = _state.value.copy(isClosing = false, isClosed = true)
+            } else {
+                dailySnapshotRepository.insert(
+                    DailySnapshotEntity(
+                        date = startOfDay,
+                        totalSales = s.totalSales,
+                        totalExpenses = s.totalExpenses,
+                        totalPurchases = s.totalPurchases,
+                        cashReceived = s.cashReceived,
+                        creditGiven = s.creditGiven,
+                        netProfit = s.netProfit,
+                        openingStockValue = s.stockValue,
+                        closingStockValue = s.stockValue
+                    )
+                )
+            }
+            _state.value = _state.value.copy(isClosing = false, isClosed = true, alreadyClosed = true)
+        }
+    }
+
+    fun showCalendar() {
+        _state.value = _state.value.copy(showCalendar = true)
+    }
+
+    fun hideCalendar() {
+        _state.value = _state.value.copy(showCalendar = false)
+    }
+
+    fun selectDate(date: LocalDate) {
+        _state.value = _state.value.copy(selectedDate = date, showCalendar = false)
+        viewModelScope.launch {
+            val startOfDay = date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+            val snapshot = dailySnapshotRepository.getSnapshotByDate(startOfDay)
+            _state.value = _state.value.copy(selectedSnapshot = snapshot)
         }
     }
 }
