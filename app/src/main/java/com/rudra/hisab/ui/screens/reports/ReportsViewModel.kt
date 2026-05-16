@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.poi.ss.usermodel.BorderStyle
@@ -96,19 +97,19 @@ class ReportsViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             val settings = appPreferences.settings.first()
-            _uiState.value = _uiState.value.copy(isBangla = settings.languageCode == "bn")
+            _uiState.update { it.copy(isBangla = settings.languageCode == "bn") }
         }
     }
 
     fun setDateRange(startDate: Long, endDate: Long) {
-        _uiState.value = _uiState.value.copy(startDate = startDate, endDate = endDate)
+        _uiState.update { it.copy(startDate = startDate, endDate = endDate) }
         loadReports()
     }
 
     private fun loadReports() {
         val start = _uiState.value.startDate
         val end = _uiState.value.endDate
-        _uiState.value = _uiState.value.copy(isLoading = true)
+        _uiState.update { it.copy(isLoading = true) }
 
         viewModelScope.launch {
             // Sales — suspend snapshot from transactions table
@@ -135,7 +136,7 @@ class ReportsViewModel @Inject constructor(
             val lowStock = productRepository.getLowStockProductsOnce()
             val stockValue = productRepository.getTotalStockValue().first() ?: 0.0
 
-            _uiState.value = _uiState.value.copy(
+            _uiState.update { it.copy(
                 salesReport = SalesReportData(
                     totalSales = totalSales,
                     totalPaid = totalSales - totalDueInRange,
@@ -158,17 +159,17 @@ class ReportsViewModel @Inject constructor(
                 lowStockCount = lowStock.size,
                 totalStockValue = stockValue,
                 isLoading = false
-            )
+            )}
         }
     }
 
     fun setFormat(format: ExportFormat) {
-        _uiState.value = _uiState.value.copy(selectedFormat = format)
+        _uiState.update { it.copy(selectedFormat = format) }
     }
 
     fun exportData(context: Context) {
         val state = _uiState.value
-        _uiState.value = state.copy(isExporting = true)
+        _uiState.update { it.copy(isExporting = true) }
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 val file = when (state.selectedFormat) {
@@ -180,7 +181,7 @@ class ReportsViewModel @Inject constructor(
             } catch (e: Exception) {
                 e.printStackTrace()
             } finally {
-                _uiState.value = _uiState.value.copy(isExporting = false)
+                _uiState.update { it.copy(isExporting = false) }
             }
         }
     }

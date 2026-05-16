@@ -40,6 +40,9 @@ interface TransactionDao {
     ): Flow<List<TransactionEntity>>
 
     @Query("SELECT COUNT(*) FROM transactions WHERE type = 'SALE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")
+    fun getTodaySaleCountFlow(startOfDay: Long, endOfDay: Long): Flow<Int>
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE type = 'SALE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")
     suspend fun getTodaySaleCount(startOfDay: Long, endOfDay: Long): Int
 
     @Query("SELECT COALESCE(SUM(totalAmount), 0) FROM transactions WHERE type = 'SALE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")

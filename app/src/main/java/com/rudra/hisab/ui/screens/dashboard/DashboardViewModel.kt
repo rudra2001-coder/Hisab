@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -148,18 +149,17 @@ class DashboardViewModel @Inject constructor(
                     if (isBn) "EEEE, dd MMMM yyyy" else "EEEE, MMMM dd, yyyy",
                     if (isBn) Locale.forLanguageTag("bn") else Locale.ENGLISH
                 )
-                _state.value = _state.value.copy(
+                _state.update { it.copy(
                     shopName     = settings.shopName,
                     quickActions = settings.quickActions.split(",").map { it.trim() },
                     languageCode = settings.languageCode,
                     dateLabel    = now.format(formatter),
-                )
+                )}
             }
         }
 
         // Daily aggregates
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
             combine(
                 transactionRepository.getTodaySalesFlow(dayStart, dayEnd),
                 expenseRepository.getTodayExpensesFlow(dayStart, dayEnd),
@@ -169,8 +169,9 @@ class DashboardViewModel @Inject constructor(
                 transactionRepository.getTodayCreditFlow(dayStart, dayEnd),
                 productRepository.getProductCount(),
                 productRepository.getTotalStockValue(),
-            ) { args: Array<Any?> ->
-                _state.value.copy(
+                transactionRepository.getTodaySaleCountFlow(dayStart, dayEnd),
+            ) { args: Array<Any?> -> args }.collect { args ->
+                _state.update { it.copy(
                     todaySales    = args[0] as Double,
                     todayExpenses = args[1] as Double,
                     totalDues     = (args[2] as Double?) ?: 0.0,
@@ -180,12 +181,9 @@ class DashboardViewModel @Inject constructor(
                     todayCreditGiven = args[5] as Double,
                     totalProductCount = args[6] as Int,
                     totalStockValue   = (args[7] as Double?) ?: 0.0,
+                    todaySaleCount    = args[8] as Int,
                     isLoading         = false,
-                )
-            }.collect { newState ->
-                _state.value = newState.copy(
-                    todaySaleCount = transactionRepository.getTodaySaleCount(dayStart, dayEnd),
-                )
+                )}
             }
         }
 
@@ -196,16 +194,17 @@ class DashboardViewModel @Inject constructor(
                 expenseRepository.getTodayExpensesFlow(monthStart, monthEnd),
                 transactionRepository.getTodayPurchasesFlow(monthStart, monthEnd),
                 transactionRepository.getTodayCreditFlow(monthStart, monthEnd),
-            ) { sales, expenses, purchases, credit ->
-                arrayOf(sales, expenses, purchases, credit)
+                transactionRepository.getTodaySaleCountFlow(monthStart, monthEnd),
+            ) { sales, expenses, purchases, credit, count ->
+                arrayOf<Any?>(sales, expenses, purchases, credit, count)
             }.collect { arr ->
-                _state.value = _state.value.copy(
+                _state.update { it.copy(
                     monthSales       = arr[0] as Double,
                     monthExpenses    = arr[1] as Double,
                     monthPurchases   = arr[2] as Double,
                     monthCreditGiven = arr[3] as Double,
-                    monthSaleCount   = transactionRepository.getTodaySaleCount(monthStart, monthEnd),
-                )
+                    monthSaleCount   = arr[4] as Int,
+                )}
             }
         }
     }
@@ -213,15 +212,15 @@ class DashboardViewModel @Inject constructor(
     private fun loadProductsAndCustomers() {
         viewModelScope.launch {
             productRepository.getAllProducts().collect { products ->
-                _state.value = _state.value.copy(allProducts = products)
+                _state.update { it.copy(allProducts = products) }
             }
         }
         viewModelScope.launch {
             customerRepository.getAllCustomers().collect { customers ->
-                _state.value = _state.value.copy(
+                _state.update { it.copy(
                     allCustomers        = customers,
                     totalCustomerCount  = customers.size,
-                )
+                )}
             }
         }
     }
@@ -229,35 +228,35 @@ class DashboardViewModel @Inject constructor(
     // ── Period toggle ─────────────────────────────────────────────────────────
 
     fun setSelectedPeriod(period: DashboardPeriod) {
-        _state.value = _state.value.copy(selectedPeriod = period)
+        _state.update { it.copy(selectedPeriod = period) }
     }
 
     // ── FAB ───────────────────────────────────────────────────────────────────
 
-    fun toggleFabMenu() { _state.value = _state.value.copy(showFabMenu = !_state.value.showFabMenu) }
-    fun hideFabMenu()   { _state.value = _state.value.copy(showFabMenu = false) }
+    fun toggleFabMenu() { _state.update { it.copy(showFabMenu = !it.showFabMenu) } }
+    fun hideFabMenu()   { _state.update { it.copy(showFabMenu = false) } }
 
     // ── Quick Sale ────────────────────────────────────────────────────────────
 
     fun showQuickSale() {
         resetQuickState()
-        _state.value = _state.value.copy(showQuickSaleDialog = true, showFabMenu = false)
+        _state.update { it.copy(showQuickSaleDialog = true, showFabMenu = false) }
     }
     fun hideQuickSale() {
-        _state.value = _state.value.copy(showQuickSaleDialog = false, quickSaleComplete = false)
+        _state.update { it.copy(showQuickSaleDialog = false, quickSaleComplete = false) }
     }
 
-    fun quickSetSearchQuery(q: String) { _state.value = _state.value.copy(quickSearchQuery = q) }
+    fun quickSetSearchQuery(q: String) { _state.update { it.copy(quickSearchQuery = q) } }
     fun quickSelectProduct(p: ProductEntity) {
-        _state.value = _state.value.copy(quickSelectedProduct = p, quickSearchQuery = "", quickQuantity = "1")
+        _state.update { it.copy(quickSelectedProduct = p, quickSearchQuery = "", quickQuantity = "1") }
     }
     fun quickSetQuantity(q: String) {
-        if (q.length <= 6) _state.value = _state.value.copy(quickQuantity = q)
+        if (q.length <= 6) _state.update { it.copy(quickQuantity = q) }
     }
     fun quickClearProduct() {
-        _state.value = _state.value.copy(
+        _state.update { it.copy(
             quickSelectedProduct = null, quickQuantity = "1", quickPaymentType = SalePaymentType.CASH,
-        )
+        )}
     }
 
     fun quickCompleteSale() {
@@ -272,7 +271,7 @@ class DashboardViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            _state.value = _state.value.copy(quickIsSaving = true)
+            _state.update { it.copy(quickIsSaving = true) }
             runCatching {
                 database.withTransaction {
                     productRepository.removeStock(product.id, qty)
@@ -294,9 +293,9 @@ class DashboardViewModel @Inject constructor(
                     }
                 }
             }.onSuccess {
-                _state.value = _state.value.copy(quickIsSaving = false, quickSaleComplete = true)
+                _state.update { it.copy(quickIsSaving = false, quickSaleComplete = true) }
             }.onFailure {
-                _state.value = _state.value.copy(quickIsSaving = false)
+                _state.update { it.copy(quickIsSaving = false) }
             }
         }
     }
@@ -305,18 +304,18 @@ class DashboardViewModel @Inject constructor(
 
     fun showQuickExpense() {
         resetQuickState()
-        _state.value = _state.value.copy(showQuickExpenseDialog = true, showFabMenu = false)
+        _state.update { it.copy(showQuickExpenseDialog = true, showFabMenu = false) }
     }
-    fun hideQuickExpense() { _state.value = _state.value.copy(showQuickExpenseDialog = false) }
-    fun quickSetAmount(a: String)      { _state.value = _state.value.copy(quickAmount = a) }
-    fun quickSetDescription(d: String) { _state.value = _state.value.copy(quickDescription = d) }
-    fun quickSetExpenseCategory(c: ExpenseCategory) { _state.value = _state.value.copy(quickExpenseCategory = c) }
+    fun hideQuickExpense() { _state.update { it.copy(showQuickExpenseDialog = false) } }
+    fun quickSetAmount(a: String)      { _state.update { it.copy(quickAmount = a) } }
+    fun quickSetDescription(d: String) { _state.update { it.copy(quickDescription = d) } }
+    fun quickSetExpenseCategory(c: ExpenseCategory) { _state.update { it.copy(quickExpenseCategory = c) } }
 
     fun quickAddExpense() {
         val s      = _state.value
         val amount = s.quickAmount.toDoubleOrNull()?.takeIf { it > 0 } ?: return
         viewModelScope.launch {
-            _state.value = _state.value.copy(quickIsSaving = true)
+            _state.update { it.copy(quickIsSaving = true) }
             runCatching {
                 database.withTransaction {
                     expenseRepository.insert(
@@ -338,9 +337,9 @@ class DashboardViewModel @Inject constructor(
                     )
                 }
             }.onSuccess {
-                _state.value = _state.value.copy(quickIsSaving = false, showQuickExpenseDialog = false)
+                _state.update { it.copy(quickIsSaving = false, showQuickExpenseDialog = false) }
             }.onFailure {
-                _state.value = _state.value.copy(quickIsSaving = false)
+                _state.update { it.copy(quickIsSaving = false) }
             }
         }
     }
@@ -349,17 +348,17 @@ class DashboardViewModel @Inject constructor(
 
     fun showQuickStock() {
         resetQuickState()
-        _state.value = _state.value.copy(showQuickStockDialog = true, showFabMenu = false)
+        _state.update { it.copy(showQuickStockDialog = true, showFabMenu = false) }
     }
-    fun hideQuickStock() { _state.value = _state.value.copy(showQuickStockDialog = false) }
-    fun quickSetStockIsAdd(isAdd: Boolean) { _state.value = _state.value.copy(quickStockIsAdd = isAdd) }
+    fun hideQuickStock() { _state.update { it.copy(showQuickStockDialog = false) } }
+    fun quickSetStockIsAdd(isAdd: Boolean) { _state.update { it.copy(quickStockIsAdd = isAdd) } }
 
     fun quickUpdateStock() {
         val s       = _state.value
         val product = s.quickSelectedProduct ?: return
         val qty     = s.quickQuantity.toDoubleOrNull()?.takeIf { it > 0 } ?: return
         viewModelScope.launch {
-            _state.value = _state.value.copy(quickIsSaving = true)
+            _state.update { it.copy(quickIsSaving = true) }
             runCatching {
                 database.withTransaction {
                     if (s.quickStockIsAdd) {
@@ -389,9 +388,9 @@ class DashboardViewModel @Inject constructor(
                     }
                 }
             }.onSuccess {
-                _state.value = _state.value.copy(quickIsSaving = false, showQuickStockDialog = false)
+                _state.update { it.copy(quickIsSaving = false, showQuickStockDialog = false) }
             }.onFailure {
-                _state.value = _state.value.copy(quickIsSaving = false)
+                _state.update { it.copy(quickIsSaving = false) }
             }
         }
     }
@@ -400,21 +399,21 @@ class DashboardViewModel @Inject constructor(
 
     fun showQuickPayment() {
         resetQuickState()
-        _state.value = _state.value.copy(showQuickPaymentDialog = true, showFabMenu = false)
+        _state.update { it.copy(showQuickPaymentDialog = true, showFabMenu = false) }
     }
-    fun hideQuickPayment() { _state.value = _state.value.copy(showQuickPaymentDialog = false) }
-    fun quickSetPaymentIsReceive(r: Boolean) { _state.value = _state.value.copy(quickPaymentIsReceive = r) }
+    fun hideQuickPayment() { _state.update { it.copy(showQuickPaymentDialog = false) } }
+    fun quickSetPaymentIsReceive(r: Boolean) { _state.update { it.copy(quickPaymentIsReceive = r) } }
     fun quickSelectCustomer(c: CustomerEntity) {
-        _state.value = _state.value.copy(quickSelectedCustomer = c, quickSearchQuery = "")
+        _state.update { it.copy(quickSelectedCustomer = c, quickSearchQuery = "") }
     }
-    fun quickClearCustomer() { _state.value = _state.value.copy(quickSelectedCustomer = null) }
-    fun quickSetPaymentType(type: SalePaymentType) { _state.value = _state.value.copy(quickPaymentType = type) }
+    fun quickClearCustomer() { _state.update { it.copy(quickSelectedCustomer = null) } }
+    fun quickSetPaymentType(type: SalePaymentType) { _state.update { it.copy(quickPaymentType = type) } }
 
     fun quickRecordPayment() {
         val s      = _state.value
         val amount = s.quickAmount.toDoubleOrNull()?.takeIf { it > 0 } ?: return
         viewModelScope.launch {
-            _state.value = _state.value.copy(quickIsSaving = true)
+            _state.update { it.copy(quickIsSaving = true) }
             runCatching {
                 val pType = if (s.quickPaymentIsReceive) PaymentType.RECEIVED else PaymentType.PAID
                 database.withTransaction {
@@ -434,9 +433,9 @@ class DashboardViewModel @Inject constructor(
                     }
                 }
             }.onSuccess {
-                _state.value = _state.value.copy(quickIsSaving = false, showQuickPaymentDialog = false)
+                _state.update { it.copy(quickIsSaving = false, showQuickPaymentDialog = false) }
             }.onFailure {
-                _state.value = _state.value.copy(quickIsSaving = false)
+                _state.update { it.copy(quickIsSaving = false) }
             }
         }
     }
@@ -444,7 +443,7 @@ class DashboardViewModel @Inject constructor(
     // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun resetQuickState() {
-        _state.value = _state.value.copy(
+        _state.update { it.copy(
             quickSearchQuery    = "",
             quickSelectedProduct = null,
             quickSelectedCustomer = null,
@@ -457,6 +456,6 @@ class DashboardViewModel @Inject constructor(
             quickPaymentIsReceive = true,
             quickIsSaving       = false,
             quickSaleComplete   = false,
-        )
+        )}
     }
 }

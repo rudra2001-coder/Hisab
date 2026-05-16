@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -64,66 +65,83 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     private fun loadAnalytics() {
+        val now = LocalDate.now()
+        val sevenDaysAgo = now.minusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val thirtyDaysAgo = now.minusDays(30).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val fourteenDaysAgo = now.minusDays(14).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val weekAgo = now.minusDays(6).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val todayEnd = now.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
         viewModelScope.launch {
-            val settings = appPreferences.settings.first()
-            _state.value = _state.value.copy(isLoading = true, isBangla = settings.languageCode == "bn")
+            appPreferences.settings.collect { settings ->
+                _state.update { it.copy(isBangla = settings.languageCode == "bn") }
+            }
+        }
 
-            val now = LocalDate.now()
-            val sevenDaysAgo = now.minusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val thirtyDaysAgo = now.minusDays(30).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val fourteenDaysAgo = now.minusDays(14).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
-            val weekAgo = now.minusDays(6).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val todayEnd = now.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
+        viewModelScope.launch {
             dailySnapshotRepository.getSnapshotsByRange(weekAgo, todayEnd).collect { snapshots ->
                 val profits = snapshots.sortedBy { it.date }.map { it.netProfit }
-                _state.value = _state.value.copy(weeklyProfit = profits)
+                _state.update { it.copy(weeklyProfit = profits) }
             }
+        }
 
+        viewModelScope.launch {
             transactionRepository.getTopProducts(thirtyDaysAgo).collect { top ->
                 val details = top.mapNotNull { s -> productRepository.getProductById(s.productId) }
-                _state.value = _state.value.copy(topProducts = top, topProductsDetails = details)
+                _state.update { it.copy(topProducts = top, topProductsDetails = details) }
             }
+        }
 
+        viewModelScope.launch {
             expenseRepository.getExpenseBreakdown(sevenDaysAgo, todayEnd).collect { breakdown ->
-                _state.value = _state.value.copy(expenseBreakdown = breakdown)
+                _state.update { it.copy(expenseBreakdown = breakdown) }
             }
+        }
 
+        viewModelScope.launch {
             productRepository.getLowStockProducts().collect { low ->
-                _state.value = _state.value.copy(lowStockProducts = low)
+                _state.update { it.copy(lowStockProducts = low) }
             }
+        }
 
-            val allProducts = productRepository.getAllProducts().first()
-            val slow = mutableListOf<ProductEntity>()
-            for (product in allProducts) {
-                val lastSale = transactionRepository.getLastSaleDate(product.id)
-                if (lastSale == null || lastSale < fourteenDaysAgo) {
-                    slow.add(product)
+        viewModelScope.launch {
+            productRepository.getAllProducts().collect { allProducts ->
+                val slow = mutableListOf<ProductEntity>()
+                for (product in allProducts) {
+                    val lastSale = transactionRepository.getLastSaleDate(product.id)
+                    if (lastSale == null || lastSale < fourteenDaysAgo) {
+                        slow.add(product)
+                    }
                 }
+                _state.update { it.copy(slowMovers = slow) }
             }
-            _state.value = _state.value.copy(slowMovers = slow)
+        }
 
+        viewModelScope.launch {
             customerRepository.getAllCustomers().collect { customers ->
                 val aging = customers.filter { it.totalDue > 0 }.map {
                     val daysSince = it.lastTransactionAt?.let { time ->
                         val txDate = java.time.Instant.ofEpochMilli(time).atZone(ZoneId.systemDefault()).toLocalDate()
                         java.time.temporal.ChronoUnit.DAYS.between(txDate, now)
                     } ?: 0L
-                    val bracket = when { daysSince <= 7 -> "0-7 days"; daysSince <= 30 -> "7-30 days"; else -> "30+ days" }
+                    val bracket = when {
+                        daysSince <= 7 -> "0-7 days"
+                        daysSince <= 30 -> "7-30 days"
+                        else -> "30+ days"
+                    }
                     Pair(bracket, 1L)
                 }
-                _state.value = _state.value.copy(
+                _state.update { it.copy(
                     dueCustomers = aging,
                     customerOutstanding = customers.filter { it.totalDue > 0 }.sortedByDescending { it.totalDue },
                     isLoading = false
-                )
+                )}
             }
-
-            loadProductProfit(thirtyDaysAgo)
-            loadMonthlyGrowth()
-            loadCashFlow(thirtyDaysAgo, todayEnd)
         }
+
+        viewModelScope.launch { loadProductProfit(thirtyDaysAgo) }
+        viewModelScope.launch { loadMonthlyGrowth() }
+        viewModelScope.launch { loadCashFlow(thirtyDaysAgo, todayEnd) }
     }
 
     private suspend fun loadProductProfit(since: Long) {
@@ -133,7 +151,7 @@ class AnalyticsViewModel @Inject constructor(
             val profit = (product.sellPrice - product.buyPrice) * qty
             product to profit
         }.sortedByDescending { it.second }
-        _state.value = _state.value.copy(productProfit = profitList)
+        _state.update { it.copy(productProfit = profitList) }
     }
 
     private suspend fun loadMonthlyGrowth() {
@@ -149,7 +167,7 @@ class AnalyticsViewModel @Inject constructor(
             val label = SimpleDateFormat("MMM yy", Locale.forLanguageTag("bn")).format(Date(start))
             growth.add(label to total)
         }
-        _state.value = _state.value.copy(monthlyGrowth = growth.reversed())
+        _state.update { it.copy(monthlyGrowth = growth.reversed()) }
     }
 
     private suspend fun loadCashFlow(start: Long, end: Long) {
@@ -158,15 +176,15 @@ class AnalyticsViewModel @Inject constructor(
             val date = SimpleDateFormat("dd MMM", Locale.forLanguageTag("bn")).format(Date(snap.date))
             date to (snap.totalSales - snap.totalExpenses)
         }
-        _state.value = _state.value.copy(cashFlow = flow)
+        _state.update { it.copy(cashFlow = flow) }
     }
 
     fun setCustomStartDate(date: LocalDate) {
-        _state.value = _state.value.copy(customStartDate = date)
+        _state.update { it.copy(customStartDate = date) }
     }
 
     fun setCustomEndDate(date: LocalDate) {
-        _state.value = _state.value.copy(customEndDate = date)
+        _state.update { it.copy(customEndDate = date) }
     }
 
     fun refreshWithCustomRange() {
@@ -177,8 +195,8 @@ class AnalyticsViewModel @Inject constructor(
         }
     }
 
-    fun showDatePicker() { _state.value = _state.value.copy(showDatePicker = true) }
-    fun hideDatePicker() { _state.value = _state.value.copy(showDatePicker = false) }
+    fun showDatePicker() { _state.update { it.copy(showDatePicker = true) } }
+    fun hideDatePicker() { _state.update { it.copy(showDatePicker = false) } }
 
     suspend fun buildReportData(): ReportData {
         val settings = appPreferences.settings.first()

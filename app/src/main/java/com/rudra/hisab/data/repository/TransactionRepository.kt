@@ -41,6 +41,9 @@ class TransactionRepository @Inject constructor(
     suspend fun getTodaySaleCount(startOfDay: Long, endOfDay: Long): Int =
         transactionDao.getTodaySaleCount(startOfDay, endOfDay)
 
+    fun getTodaySaleCountFlow(startOfDay: Long, endOfDay: Long): Flow<Int> =
+        transactionDao.getTodaySaleCountFlow(startOfDay, endOfDay)
+
     fun getTodaySalesFlow(startOfDay: Long, endOfDay: Long): Flow<Double> =
         transactionDao.getTodaySalesFlow(startOfDay, endOfDay)
 
