@@ -60,6 +60,12 @@ interface TransactionDao {
     @Query("SELECT COALESCE(SUM(totalAmount - paidAmount), 0) FROM transactions WHERE type = 'SALE' AND paymentType IN ('CREDIT', 'PARTIAL') AND createdAt >= :startOfDay AND createdAt < :endOfDay")
     fun getTodayCreditFlow(startOfDay: Long, endOfDay: Long): Flow<Double>
 
+    @Query("SELECT COALESCE(SUM(totalAmount - paidAmount), 0) FROM transactions WHERE type = 'SALE' AND paymentType IN ('CREDIT', 'PARTIAL') AND createdAt >= :startOfDay AND createdAt < :endOfDay")
+    suspend fun getTotalDueInRange(startOfDay: Long, endOfDay: Long): Double
+
+    @Query("SELECT COALESCE(SUM(paidAmount), 0) FROM transactions WHERE type = 'SALE' AND createdAt >= :startOfDay AND createdAt < :endOfDay")
+    suspend fun getTotalSalesPaidInRange(startOfDay: Long, endOfDay: Long): Double
+
     @Query("SELECT COALESCE(SUM(totalAmount - paidAmount), 0) FROM transactions WHERE type = 'SALE' AND paymentType IN ('CREDIT', 'PARTIAL')")
     fun getTotalOutstandingDues(): Flow<Double?>
 

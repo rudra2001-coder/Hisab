@@ -136,6 +136,7 @@ class MainActivity : FragmentActivity() {
                                         currentRoute = currentRoute,
                                         navOrder = settings!!.navOrder,
                                         isFabMode = isFabMode,
+                                        isBangla = settings!!.isBangla,
                                         onNavigate = { route ->
                                             navController.navigate(route) {
                                                 popUpTo(navController.graph.findStartDestination().id) {

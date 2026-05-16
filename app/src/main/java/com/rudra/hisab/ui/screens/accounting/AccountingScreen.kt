@@ -58,6 +58,7 @@ fun AccountingScreen(
     viewModel: AccountingViewModel
 ) {
     val state by viewModel.uiState.collectAsState()
+    val isBangla = state.isBangla
     val sdf = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
 
     Scaffold(
@@ -87,7 +88,7 @@ fun AccountingScreen(
                 .padding(16.dp)
         ) {
             Text(
-                text = "অ্যাকাউন্টিং",
+                text = if (isBangla) "অ্যাকাউন্টিং" else "Accounting",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -102,9 +103,9 @@ fun AccountingScreen(
                         text = {
                             Text(
                                 text = when (tab) {
-                                    AccountingTab.CASH_BOOK -> "ক্যাশ বুক"
-                                    AccountingTab.LEDGER -> "লেজার"
-                                    AccountingTab.EXPENSES -> "খরচ"
+                                    AccountingTab.CASH_BOOK -> if (isBangla) "ক্যাশ বুক" else "Cash Book"
+                                    AccountingTab.LEDGER -> if (isBangla) "লেজার" else "Ledger"
+                                    AccountingTab.EXPENSES -> if (isBangla) "খরচ" else "Expenses"
                                 }
                             )
                         }
@@ -115,27 +116,27 @@ fun AccountingScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (state.selectedTab) {
-                AccountingTab.CASH_BOOK -> CashBookContent(state, sdf)
-                AccountingTab.LEDGER -> LedgerContent(state)
-                AccountingTab.EXPENSES -> ExpensesContent()
+                AccountingTab.CASH_BOOK -> CashBookContent(state, sdf, isBangla)
+                AccountingTab.LEDGER -> LedgerContent(state, isBangla)
+                AccountingTab.EXPENSES -> ExpensesContent(isBangla)
             }
         }
 
         if (state.showAddCashEntryDialog) {
-            AddCashEntryDialog(state, viewModel)
+            AddCashEntryDialog(state, viewModel, isBangla)
         }
     }
 }
 
 @Composable
-private fun CashBookContent(state: AccountingUiState, sdf: SimpleDateFormat) {
+private fun CashBookContent(state: AccountingUiState, sdf: SimpleDateFormat, isBangla: Boolean) {
     val todayIn = state.cashBookEntries.filter { it.type == "CASH_IN" }.sumOf { it.amount }
     val todayOut = state.cashBookEntries.filter { it.type == "CASH_OUT" }.sumOf { it.amount }
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SummaryCard("আজকের ইন", todayIn, GreenProfit, Modifier.weight(1f))
-        SummaryCard("আজকের আউট", todayOut, RedExpense, Modifier.weight(1f))
-        SummaryCard("নেট ব্যালেন্স", todayIn - todayOut, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+        SummaryCard(if (isBangla) "আজকের ইন" else "Today's In", todayIn, GreenProfit, Modifier.weight(1f))
+        SummaryCard(if (isBangla) "আজকের আউট" else "Today's Out", todayOut, RedExpense, Modifier.weight(1f))
+        SummaryCard(if (isBangla) "নেট ব্যালেন্স" else "Net Balance", todayIn - todayOut, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -148,11 +149,11 @@ private fun CashBookContent(state: AccountingUiState, sdf: SimpleDateFormat) {
 }
 
 @Composable
-private fun LedgerContent(state: AccountingUiState) {
+private fun LedgerContent(state: AccountingUiState, isBangla: Boolean) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SummaryCard("গ্রাহক", state.customerBalance, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
-        SummaryCard("সরবরাহকারী", state.supplierBalance, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
-        SummaryCard("জেনারেল", state.generalBalance, MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
+        SummaryCard(if (isBangla) "গ্রাহক" else "Customer", state.customerBalance, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+        SummaryCard(if (isBangla) "সরবরাহকারী" else "Supplier", state.supplierBalance, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+        SummaryCard(if (isBangla) "জেনারেল" else "General", state.generalBalance, MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -165,9 +166,12 @@ private fun LedgerContent(state: AccountingUiState) {
 }
 
 @Composable
-private fun ExpensesContent() {
+private fun ExpensesContent(isBangla: Boolean) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("খরচ ব্যবস্থাপনা শীঘ্রই আসছে", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(
+            if (isBangla) "খরচ ব্যবস্থাপনা শীঘ্রই আসছে" else "Expense management coming soon",
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -246,28 +250,28 @@ private fun LedgerRow(entry: com.rudra.hisab.data.local.entity.LedgerEntryEntity
 }
 
 @Composable
-private fun AddCashEntryDialog(state: AccountingUiState, viewModel: AccountingViewModel) {
+private fun AddCashEntryDialog(state: AccountingUiState, viewModel: AccountingViewModel, isBangla: Boolean) {
     AlertDialog(
         onDismissRequest = viewModel::hideAddCashEntry,
-        title = { Text(if (state.cashEntryType == "CASH_IN") "ক্যাশ ইন" else "ক্যাশ আউট") },
+        title = { Text(if (state.cashEntryType == "CASH_IN") (if (isBangla) "ক্যাশ ইন" else "Cash In") else (if (isBangla) "ক্যাশ আউট" else "Cash Out")) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = state.cashEntryAmount,
                     onValueChange = viewModel::setCashEntryAmount,
-                    label = { Text("পরিমাণ") },
+                    label = { Text(if (isBangla) "পরিমাণ" else "Amount") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
                 OutlinedTextField(
                     value = state.cashEntryDescription,
                     onValueChange = viewModel::setCashEntryDescription,
-                    label = { Text("বিবরণ") },
+                    label = { Text(if (isBangla) "বিবরণ" else "Description") },
                     singleLine = true
                 )
             }
         },
-        confirmButton = { Button(onClick = viewModel::saveCashEntry) { Text("সংরক্ষণ") } },
-        dismissButton = { TextButton(onClick = viewModel::hideAddCashEntry) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = viewModel::saveCashEntry) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
+        dismissButton = { TextButton(onClick = viewModel::hideAddCashEntry) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }

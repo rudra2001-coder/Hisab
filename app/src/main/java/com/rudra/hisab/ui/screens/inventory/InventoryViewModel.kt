@@ -9,6 +9,7 @@ import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
 import com.rudra.hisab.data.repository.CategoryRepository
+import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.ProductRepository
 import com.rudra.hisab.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,7 +36,8 @@ data class InventoryState(
     val deletedProduct: ProductEntity? = null,
     val showPriceHistory: ProductEntity? = null,
     val priceHistory: List<TransactionEntity> = emptyList(),
-    val productImageUri: String = ""
+    val productImageUri: String = "",
+    val isBangla: Boolean = true
 )
 
 @HiltViewModel
@@ -43,7 +45,8 @@ class InventoryViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val categoryRepository: CategoryRepository,
     private val transactionRepository: TransactionRepository,
-    private val database: HisabDatabase
+    private val database: HisabDatabase,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(InventoryState())
@@ -53,13 +56,16 @@ class InventoryViewModel @Inject constructor(
         viewModelScope.launch {
             combine(
                 productRepository.getAllProducts(),
-                categoryRepository.getAllCategories()
-            ) { products, categories ->
-                Pair(products, categories)
-            }.collect { (products, categories) ->
+                categoryRepository.getAllCategories(),
+                appPreferences.settings
+            ) { products, categories, settings ->
+                Pair(Pair(products, categories), settings.isBangla)
+            }.collect { (first, isBangla) ->
+                val (products, categories) = first
                 _state.value = _state.value.copy(
                     products = products,
-                    categories = categories
+                    categories = categories,
+                    isBangla = isBangla
                 )
             }
         }

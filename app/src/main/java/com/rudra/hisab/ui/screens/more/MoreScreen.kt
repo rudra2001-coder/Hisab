@@ -20,19 +20,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Analytics
-import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CardMembership
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.FileDownload
 import androidx.compose.material.icons.filled.FileUpload
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Language
@@ -48,7 +44,6 @@ import androidx.compose.material.icons.filled.Store
 import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material.icons.filled.Upcoming
-import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -62,6 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -94,184 +90,40 @@ fun MoreScreen(
 
     val allMenuItems = remember {
         listOf(
-            // ── Main Navigation ──────────────────────────────────────────
-            MoreMenuItem(
-                icon = Icons.Default.Description,
-                title = "ড্যাশবোর্ড",
-                subtitle = "মূল পৃষ্ঠা ও সারসংক্ষেপ",
-                onClick = onNavigateToDashboard
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Inventory2,
-                title = "মজুদ",
-                subtitle = "পণ্য ও স্টক পরিচালনা",
-                onClick = onNavigateToInventory
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.PointOfSale,
-                title = "বিক্রয়",
-                subtitle = "নতুন বিক্রয় রেকর্ড করুন",
-                onClick = onNavigateToSale
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.People,
-                title = "গ্রাহক",
-                subtitle = "গ্রাহক তালিকা ও বাকি",
-                onClick = onNavigateToCustomers
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.ShoppingCart,
-                title = "খরচ",
-                subtitle = "দৈনিক খরচ পরিচালনা",
-                onClick = onNavigateToExpenses
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.AccountBalance,
-                title = "হিসাব খাতা",
-                subtitle = "ক্যাশ বুক ও লেজার",
-                onClick = onNavigateToAccounting
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.CalendarMonth,
-                title = "দৈনিক ক্লোজ",
-                subtitle = "দিন শেষে হিসাব বন্ধ করুন",
-                onClick = onNavigateToDailyClose
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.BarChart,
-                title = "বিশ্লেষণ",
-                subtitle = "বিক্রয় বিশ্লেষণ ও চার্ট",
-                onClick = onNavigateToAnalytics
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.ReceiptLong,
-                title = "রিপোর্টস",
-                subtitle = "বিস্তারিত রিপোর্ট ও পিডিএফ",
-                onClick = onNavigateToReports
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.CloudUpload,
-                title = "ব্যাকআপ ও এক্সপোর্ট",
-                subtitle = "ডেটা ব্যাকআপ ও এক্সপোর্ট",
-                onClick = onNavigateToExport
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Settings,
-                title = "সেটিংস",
-                subtitle = "ভাষা, PIN ও অন্যান্য সেটিংস",
-                onClick = onNavigateToSettings
-            ),
-
-            // ── Settings Sub-items ───────────────────────────────────────
-            MoreMenuItem(
-                icon = Icons.Default.Language,
-                title = "ভাষা ও থিম",
-                subtitle = "বাংলা / English, হালকা / গাঢ় থিম",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Store,
-                title = "দোকানের তথ্য",
-                subtitle = "দোকানের নাম ও বিবরণ",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Lock,
-                title = "পিন সেটআপ",
-                subtitle = "অ্যাপ লক için ৪-ডিজিট পিন",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Fingerprint,
-                title = "বায়োমেট্রিক লক",
-                subtitle = "ফিঙ্গারপ্রিন্ট দিয়ে লক",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.ShoppingCart,
-                title = "কার্ট মোড",
-                subtitle = "বিক্রয়ে কার্ট সিস্টেম",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Upcoming,
-                title = "FAB মোড",
-                subtitle = "ড্যাশবোর্ডে ফ্লোটিং অ্যাকশন বাটন",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Inventory2,
-                title = "ব্যাচ / মেয়াদ ট্র্যাকিং",
-                subtitle = "পণ্যের মেয়াদ ও ব্যাচ নম্বর",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Timer,
-                title = "ক্রেডিট লিমিট",
-                subtitle = "গ্রাহকের সর্বোচ্চ বাকি সীমা",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Delete,
-                title = "মুছার সময়সীমা",
-                subtitle = "লেনদেন মুছতে পারবেন কত ঘন্টার মধ্যে",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Schedule,
-                title = "বিক্রয় রিমাইন্ডার",
-                subtitle = "দৈনিক বিক্রয় রিমাইন্ডার সময়",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Notifications,
-                title = "মাসিক রিপোর্ট রিমাইন্ডার",
-                subtitle = "প্রতিমাসে অটো রিপোর্ট নোটিফিকেশন",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Description,
-                title = "নেভিগেশন অর্ডার",
-                subtitle = "নিচের মেনুর অর্ডার পরিবর্তন",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.TrendingUp,
-                title = "দ্রুত অ্যাকশন",
-                subtitle = "ড্যাশবোর্ডে দ্রুত অ্যাকশন বাটন",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.FileDownload,
-                title = "ডেটা এক্সপোর্ট",
-                subtitle = "JSON / CSV ফরম্যাটে ব্যাকআপ",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.FileUpload,
-                title = "ডেটা ইম্পোর্ট",
-                subtitle = "JSON ফাইল থেকে ডেটা পুনরুদ্ধার",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Delete,
-                title = "সব ডেটা মুছুন",
-                subtitle = "সমস্ত তথ্য স্থায়ীভাবে মুছে ফেলুন",
-                onClick = onNavigateToSettings
-            ),
-            MoreMenuItem(
-                icon = Icons.Default.Info,
-                title = "সম্পর্কে",
-                subtitle = "Hisab v1.0 — অ্যাপ তথ্য",
-                onClick = onNavigateToSettings
-            )
+            MoreMenuItem(Icons.Default.Description, "Dashboard", "Main page & summary", onNavigateToDashboard),
+            MoreMenuItem(Icons.Default.Inventory2, "Inventory", "Manage products & stock", onNavigateToInventory),
+            MoreMenuItem(Icons.Default.PointOfSale, "Sale", "Record new sale", onNavigateToSale),
+            MoreMenuItem(Icons.Default.People, "Customers", "Customer list & due", onNavigateToCustomers),
+            MoreMenuItem(Icons.Default.ShoppingCart, "Expenses", "Daily expenses", onNavigateToExpenses),
+            MoreMenuItem(Icons.Default.AccountBalance, "Accounting", "Cash book & ledger", onNavigateToAccounting),
+            MoreMenuItem(Icons.Default.CalendarMonth, "Daily Close", "End of day closing", onNavigateToDailyClose),
+            MoreMenuItem(Icons.Default.BarChart, "Analytics", "Sales analysis & charts", onNavigateToAnalytics),
+            MoreMenuItem(Icons.Default.ReceiptLong, "Reports", "Detailed reports & PDF", onNavigateToReports),
+            MoreMenuItem(Icons.Default.CloudUpload, "Backup & Export", "Data backup & export", onNavigateToExport),
+            MoreMenuItem(Icons.Default.Settings, "Settings", "Language, PIN & other settings", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Language, "Language & Theme", "English / বাংলা, Light / Dark", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Store, "Shop Info", "Shop name & details", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Lock, "PIN Setup", "4-digit app lock", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Fingerprint, "Biometric Lock", "Fingerprint lock", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.ShoppingCart, "Cart Mode", "Cart system for sales", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Upcoming, "FAB Mode", "Floating action button", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Inventory2, "Batch Tracking", "Expiry & batch tracking", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Timer, "Credit Limit", "Max credit per customer", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Delete, "Delete Window", "Transaction delete window", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Schedule, "Sale Reminder", "Daily sale reminder time", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Notifications, "Report Reminder", "Monthly report notification", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Description, "Nav Order", "Customize bottom menu", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.TrendingUp, "Quick Actions", "Dashboard action buttons", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.FileDownload, "Data Export", "Export as JSON / CSV", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.FileUpload, "Data Import", "Restore from JSON", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Delete, "Clear All Data", "Permanently delete all data", onNavigateToSettings),
+            MoreMenuItem(Icons.Default.Info, "About", "Hisab v2.0 — App info", onNavigateToSettings)
         )
     }
 
     val filteredItems = remember(searchQuery, allMenuItems) {
-        if (searchQuery.isBlank()) {
-            allMenuItems
-        } else {
+        if (searchQuery.isBlank()) allMenuItems
+        else {
             val query = searchQuery.lowercase()
             allMenuItems.filter {
                 it.title.contains(query, ignoreCase = true) ||
@@ -285,9 +137,8 @@ fun MoreScreen(
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // ── Header ────────────────────────────────────────────────────
         Text(
-            text = "আরও",
+            text = "More",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
@@ -295,24 +146,18 @@ fun MoreScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "অন্যান্য ব্যবস্থাপনা",
+            text = "Other Management",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ── Search Bar ────────────────────────────────────────────────
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
             modifier = Modifier.fillMaxWidth(),
-            placeholder = {
-                Text(
-                    text = "ফাংশন খুঁজুন…",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            },
+            placeholder = { Text("Search function…") },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.Description,
@@ -338,10 +183,9 @@ fun MoreScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // ── Results count ─────────────────────────────────────────────
         if (searchQuery.isNotEmpty()) {
             Text(
-                text = "${filteredItems.size}টি ফলাফল পাওয়া গেছে",
+                text = "${filteredItems.size} results found",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 4.dp)
@@ -349,7 +193,6 @@ fun MoreScreen(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // ── Grid ──────────────────────────────────────────────────────
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             modifier = Modifier.fillMaxSize(),
@@ -369,12 +212,13 @@ private fun MoreGridCard(item: MoreMenuItem) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(2.dp, RoundedCornerShape(16.dp))
             .clickable(onClick = item.onClick),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier

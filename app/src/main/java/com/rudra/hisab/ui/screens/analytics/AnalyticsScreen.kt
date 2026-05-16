@@ -72,11 +72,14 @@ fun AnalyticsScreen(
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val isBangla = state.isBangla
 
     var showStartPicker by remember { mutableStateOf(false) }
     var showEndPicker by remember { mutableStateOf(false) }
 
-    val dateFormatter = DateTimeFormatter.ofPattern("dd MMM yyyy", Locale.forLanguageTag("bn"))
+    val dateFormatter = remember(isBangla) {
+        DateTimeFormatter.ofPattern("dd MMM yyyy", if (isBangla) Locale.forLanguageTag("bn") else Locale.getDefault())
+    }
 
     if (showStartPicker) {
         val startPickerState = rememberDatePickerState(
@@ -93,10 +96,10 @@ fun AnalyticsScreen(
                         )
                     }
                     showStartPicker = false
-                }) { Text("ঠিক") }
+                }) { Text(if (isBangla) "ঠিক" else "OK") }
             },
             dismissButton = {
-                TextButton(onClick = { showStartPicker = false }) { Text("বাতিল") }
+                TextButton(onClick = { showStartPicker = false }) { Text(if (isBangla) "বাতিল" else "Cancel") }
             }
         ) {
             DatePicker(state = startPickerState)
@@ -118,10 +121,10 @@ fun AnalyticsScreen(
                         )
                     }
                     showEndPicker = false
-                }) { Text("ঠিক") }
+                }) { Text(if (isBangla) "ঠিক" else "OK") }
             },
             dismissButton = {
-                TextButton(onClick = { showEndPicker = false }) { Text("বাতিল") }
+                TextButton(onClick = { showEndPicker = false }) { Text(if (isBangla) "বাতিল" else "Cancel") }
             }
         ) {
             DatePicker(state = endPickerState)
@@ -135,7 +138,7 @@ fun AnalyticsScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "রিপোর্ট ও বিশ্লেষণ",
+            text = if (isBangla) "রিপোর্ট ও বিশ্লেষণ" else "Reports & Analytics",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
@@ -168,19 +171,22 @@ fun AnalyticsScreen(
                 )
             }
             IconButton(onClick = { viewModel.refreshWithCustomRange() }) {
-                Icon(Icons.Default.Check, contentDescription = "প্রয়োগ", tint = BlueInfo)
+                Icon(Icons.Default.Check, contentDescription = if (isBangla) "প্রয়োগ" else "Apply", tint = BlueInfo)
             }
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
         if (state.isLoading) {
-            Text("লোড হচ্ছে...", style = MaterialTheme.typography.bodyLarge)
+            Text(if (isBangla) "লোড হচ্ছে..." else "Loading...", style = MaterialTheme.typography.bodyLarge)
         } else {
             // Weekly Profit
-            ReportCard(title = "সাপ্তাহিক মুনাফা", icon = Icons.Default.TrendingUp) {
+            ReportCard(title = if (isBangla) "সাপ্তাহিক মুনাফা" else "Weekly Profit", icon = Icons.Default.TrendingUp) {
                 state.weeklyProfit.forEachIndexed { index, profit ->
-                    val dayName = when (index) { 0 -> "শনি"; 1 -> "রবি"; 2 -> "সোম"; 3 -> "মঙ্গল"; 4 -> "বুধ"; 5 -> "বৃহস্পতি"; 6 -> "শুক্র"; else -> "দিন $index" }
+                    val dayName = if (isBangla)
+                        when (index) { 0 -> "শনি"; 1 -> "রবি"; 2 -> "সোম"; 3 -> "মঙ্গল"; 4 -> "বুধ"; 5 -> "বৃহস্পতি"; 6 -> "শুক্র"; else -> "দিন $index" }
+                    else
+                        when (index) { 0 -> "Sat"; 1 -> "Sun"; 2 -> "Mon"; 3 -> "Tue"; 4 -> "Wed"; 5 -> "Thu"; 6 -> "Fri"; else -> "Day $index" }
                     Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                         Text(dayName, style = MaterialTheme.typography.bodyMedium)
                         Text(CurrencyFormatter.format(profit), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = if (profit >= 0) GreenProfit else RedExpense)
@@ -191,7 +197,7 @@ fun AnalyticsScreen(
             // Customer Outstanding
             if (state.customerOutstanding.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "গ্রাহক বকেয়া", icon = Icons.Default.People) {
+                ReportCard(title = if (isBangla) "গ্রাহক বকেয়া" else "Customer Outstanding", icon = Icons.Default.People) {
                     state.customerOutstanding.take(10).forEach { c ->
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(c.name, style = MaterialTheme.typography.bodyMedium)
@@ -204,10 +210,10 @@ fun AnalyticsScreen(
             // Product Profit
             if (state.productProfit.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "পণ্য লাভ (৩০ দিন)", icon = Icons.Default.AttachMoney) {
+                ReportCard(title = if (isBangla) "পণ্য লাভ (৩০ দিন)" else "Product Profit (30 days)", icon = Icons.Default.AttachMoney) {
                     state.productProfit.take(10).forEach { (product, profit) ->
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(product.nameBangla, style = MaterialTheme.typography.bodyMedium)
+                            Text(if (isBangla) product.nameBangla else product.name, style = MaterialTheme.typography.bodyMedium)
                             Text(CurrencyFormatter.format(profit), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = if (profit >= 0) GreenProfit else RedExpense)
                         }
                     }
@@ -217,7 +223,7 @@ fun AnalyticsScreen(
             // Monthly Growth
             if (state.monthlyGrowth.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "মাসিক প্রবৃদ্ধি", icon = Icons.Default.TrendingUp) {
+                ReportCard(title = if (isBangla) "মাসিক প্রবৃদ্ধি" else "Monthly Growth", icon = Icons.Default.TrendingUp) {
                     state.monthlyGrowth.forEach { (label, profit) ->
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(label, style = MaterialTheme.typography.bodyMedium)
@@ -230,7 +236,7 @@ fun AnalyticsScreen(
             // Cash Flow
             if (state.cashFlow.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "নগদ প্রবাহ (দৈনিক)", icon = Icons.Default.AttachMoney) {
+                ReportCard(title = if (isBangla) "নগদ প্রবাহ (দৈনিক)" else "Cash Flow (Daily)", icon = Icons.Default.AttachMoney) {
                     state.cashFlow.forEach { (date, amount) ->
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(date, style = MaterialTheme.typography.bodyMedium)
@@ -243,9 +249,11 @@ fun AnalyticsScreen(
             // Top Products
             if (state.topProducts.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "সেরা বিক্রয়", icon = Icons.Default.TrendingUp) {
+                ReportCard(title = if (isBangla) "সেরা বিক্রয়" else "Top Products", icon = Icons.Default.TrendingUp) {
                     state.topProducts.forEachIndexed { index, summary ->
-                        val productName = state.topProductsDetails.getOrNull(index)?.nameBangla ?: "পণ্য #${summary.productId}"
+                        val productName = state.topProductsDetails.getOrNull(index)?.let {
+                            if (isBangla) it.nameBangla else it.name
+                        } ?: if (isBangla) "পণ্য #${summary.productId}" else "Product #${summary.productId}"
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("${index + 1}. $productName", style = MaterialTheme.typography.bodyMedium)
                             Text(CurrencyFormatter.format(summary.revenue), style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold, color = GreenProfit)
@@ -257,11 +265,14 @@ fun AnalyticsScreen(
             // Low stock
             if (state.lowStockProducts.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "স্টক সতর্কতা", icon = Icons.Default.AttachMoney, accentColor = OrangeDue) {
+                ReportCard(title = if (isBangla) "স্টক সতর্কতা" else "Stock Alert", icon = Icons.Default.AttachMoney, accentColor = OrangeDue) {
                     state.lowStockProducts.forEach { product ->
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(product.nameBangla, style = MaterialTheme.typography.bodyMedium)
-                            Text("বাকি: ${product.currentStock.toInt()}", style = MaterialTheme.typography.bodyMedium, color = OrangeDue, fontWeight = FontWeight.SemiBold)
+                            Text(if (isBangla) product.nameBangla else product.name, style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                if (isBangla) "বাকি: ${product.currentStock.toInt()}" else "Remaining: ${product.currentStock.toInt()}",
+                                style = MaterialTheme.typography.bodyMedium, color = OrangeDue, fontWeight = FontWeight.SemiBold
+                            )
                         }
                     }
                 }
@@ -270,9 +281,12 @@ fun AnalyticsScreen(
             // Slow movers
             if (state.slowMovers.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "ধীরগতির পণ্য (১৪+ দিন)", icon = Icons.Default.AttachMoney) {
+                ReportCard(title = if (isBangla) "ধীরগতির পণ্য (১৪+ দিন)" else "Slow Movers (14+ days)", icon = Icons.Default.AttachMoney) {
                     state.slowMovers.forEach { product ->
-                        Text("• ${product.nameBangla} (স্টক: ${product.currentStock.toInt()})", style = MaterialTheme.typography.bodyMedium)
+                        Text(
+                            if (isBangla) "• ${product.nameBangla} (স্টক: ${product.currentStock.toInt()})" else "• ${if (isBangla) product.nameBangla else product.name} (Stock: ${product.currentStock.toInt()})",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
                     }
                 }
             }
@@ -280,12 +294,19 @@ fun AnalyticsScreen(
             // Due aging
             if (state.dueCustomers.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(8.dp))
-                ReportCard(title = "বাকি সময়সীমা", icon = Icons.Default.People, accentColor = OrangeDue) {
+                ReportCard(title = if (isBangla) "বাকি সময়সীমা" else "Due Aging", icon = Icons.Default.People, accentColor = OrangeDue) {
                     val counts = state.dueCustomers.groupBy({ it.first }, { it.second }).mapValues { it.value.count() }
                     counts.forEach { (bracket, count) ->
                         Row(modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(when (bracket) { "0-7 days" -> "০-৭ দিন"; "7-30 days" -> "৭-৩০ দিন"; "30+ days" -> "৩০+ দিন"; else -> bracket }, style = MaterialTheme.typography.bodyMedium)
-                            Text("$count জন", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+                            Text(
+                                if (!isBangla) bracket
+                                else when (bracket) { "0-7 days" -> "০-৭ দিন"; "7-30 days" -> "৭-৩০ দিন"; "30+ days" -> "৩০+ দিন"; else -> bracket },
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                if (isBangla) "$count জন" else "$count people",
+                                style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -294,7 +315,7 @@ fun AnalyticsScreen(
             if (state.weeklyProfit.isEmpty() && state.topProducts.isEmpty() && state.lowStockProducts.isEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
                 Text(
-                    text = "পর্যাপ্ত তথ্য নেই। আরও বিক্রয় ও খরচ যোগ করার পর এখানে বিশ্লেষণ দেখুন।",
+                    text = if (isBangla) "পর্যাপ্ত তথ্য নেই। আরও বিক্রয় ও খরচ যোগ করার পর এখানে বিশ্লেষণ দেখুন।" else "Not enough data. Add more sales and expenses to see analysis here.",
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -318,7 +339,7 @@ fun AnalyticsScreen(
             ) {
                 Icon(Icons.Default.PictureAsPdf, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("পিডিএফ রিপোর্ট তৈরি করুন")
+                Text(if (isBangla) "পিডিএফ রিপোর্ট তৈরি করুন" else "Generate PDF Report")
             }
 
             Spacer(modifier = Modifier.height(32.dp))

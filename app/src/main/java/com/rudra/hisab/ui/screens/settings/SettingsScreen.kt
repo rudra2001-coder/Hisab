@@ -72,6 +72,7 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
+    val isBangla = state.settings.isBangla
 
     Column(
         modifier = Modifier
@@ -80,17 +81,17 @@ fun SettingsScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "সেটিংস",
+            text = if (isBangla) "সেটিংস" else "Settings",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        SettingsCard(title = "ভাষা ও থিম") {
+        SettingsCard(title = if (isBangla) "ভাষা ও থিম" else "Language & Theme") {
             SettingsRow(
                 icon = Icons.Default.Language,
-                title = "ভাষা",
+                title = if (isBangla) "ভাষা" else "Language",
                 subtitle = if (state.settings.isBangla) "বাংলা" else "English",
                 trailing = {
                     Switch(
@@ -102,37 +103,50 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Brightness6,
-                title = "থিম",
-                subtitle = when (state.settings.themeMode) { "light" -> "হালকা"; "dark" -> "গাঢ়"; else -> "সিস্টেম" },
+                title = if (isBangla) "থিম" else "Theme",
+                subtitle = when (state.settings.themeMode) {
+                    "light" -> if (isBangla) "হালকা" else "Light"
+                    "dark" -> if (isBangla) "গাঢ়" else "Dark"
+                    else -> if (isBangla) "সিস্টেম" else "System"
+                },
                 onClick = { viewModel.showThemeSelector() }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.TextFields,
-                title = "ফন্ট সাইজ",
-                subtitle = when (state.settings.fontSize) { "small" -> "ছোট"; "large" -> "বড়"; else -> "মধ্যম" },
+                title = if (isBangla) "ফন্ট সাইজ" else "Font Size",
+                subtitle = when (state.settings.fontSize) {
+                    "small" -> if (isBangla) "ছোট" else "Small"
+                    "large" -> if (isBangla) "বড়" else "Large"
+                    else -> if (isBangla) "মধ্যম" else "Medium"
+                },
                 onClick = { viewModel.showFontSelector() }
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "দোকান") {
+        SettingsCard(title = if (isBangla) "দোকান" else "Shop") {
             SettingsRow(
                 icon = Icons.Default.Store,
-                title = "দোকানের তথ্য",
-                subtitle = state.settings.shopName.ifEmpty { "নাম সেট করুন" },
+                title = if (isBangla) "দোকানের তথ্য" else "Shop Info",
+                subtitle = state.settings.shopName.ifEmpty {
+                    if (isBangla) "নাম সেট করুন" else "Set name"
+                },
                 onClick = { viewModel.showShopEdit() }
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "নিরাপত্তা") {
+        SettingsCard(title = if (isBangla) "নিরাপত্তা" else "Security") {
             SettingsRow(
                 icon = Icons.Default.Lock,
-                title = "পিন",
-                subtitle = if (state.settings.isPinEnabled) "পিন চালু" else "পিন বন্ধ",
+                title = if (isBangla) "পিন" else "PIN",
+                subtitle = if (state.settings.isPinEnabled)
+                    (if (isBangla) "পিন চালু" else "PIN On")
+                else
+                    (if (isBangla) "পিন বন্ধ" else "PIN Off"),
                 onClick = {
                     if (state.settings.isPinEnabled) viewModel.showPinChange()
                     else viewModel.showPinSetup()
@@ -142,16 +156,19 @@ fun SettingsScreen(
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
                 SettingsRow(
                     icon = Icons.Default.Lock,
-                    title = "পিন সরান",
-                    subtitle = "পিন নিষ্ক্রিয় করুন",
+                    title = if (isBangla) "পিন সরান" else "Remove PIN",
+                    subtitle = if (isBangla) "পিন নিষ্ক্রিয় করুন" else "Disable PIN",
                     onClick = { viewModel.showPinDisable() }
                 )
             }
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Fingerprint,
-                title = "বায়োমেট্রিক লক",
-                subtitle = if (state.settings.isBiometricEnabled) "চালু" else "বন্ধ",
+                title = if (isBangla) "বায়োমেট্রিক লক" else "Biometric Lock",
+                subtitle = if (state.settings.isBiometricEnabled)
+                    (if (isBangla) "চালু" else "On")
+                else
+                    (if (isBangla) "বন্ধ" else "Off"),
                 trailing = {
                     Switch(
                         checked = state.settings.isBiometricEnabled,
@@ -163,11 +180,14 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "বিক্রয় ও ইনভেন্টরি") {
+        SettingsCard(title = if (isBangla) "বিক্রয় ও ইনভেন্টরি" else "Sales & Inventory") {
             SettingsRow(
                 icon = Icons.Default.ShoppingCart,
-                title = "কার্ট মোড",
-                subtitle = if (state.settings.cartModeEnabled) "চালু" else "বন্ধ",
+                title = if (isBangla) "কার্ট মোড" else "Cart Mode",
+                subtitle = if (state.settings.cartModeEnabled)
+                    (if (isBangla) "চালু" else "On")
+                else
+                    (if (isBangla) "বন্ধ" else "Off"),
                 trailing = {
                     Switch(checked = state.settings.cartModeEnabled, onCheckedChange = { viewModel.toggleCartMode() })
                 }
@@ -175,8 +195,11 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Dashboard,
-                title = "FAB মোড",
-                subtitle = if (state.settings.fabModeEnabled) "চালু" else "বন্ধ",
+                title = "FAB Mode",
+                subtitle = if (state.settings.fabModeEnabled)
+                    (if (isBangla) "চালু" else "On")
+                else
+                    (if (isBangla) "বন্ধ" else "Off"),
                 trailing = {
                     Switch(checked = state.settings.fabModeEnabled, onCheckedChange = { viewModel.toggleFabMode() })
                 }
@@ -184,8 +207,11 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Inventory2,
-                title = "ব্যাচ/মেয়াদ ট্র্যাকিং",
-                subtitle = if (state.settings.batchTrackingEnabled) "চালু" else "বন্ধ",
+                title = if (isBangla) "ব্যাচ/মেয়াদ ট্র্যাকিং" else "Batch Tracking",
+                subtitle = if (state.settings.batchTrackingEnabled)
+                    (if (isBangla) "চালু" else "On")
+                else
+                    (if (isBangla) "বন্ধ" else "Off"),
                 trailing = {
                     Switch(checked = state.settings.batchTrackingEnabled, onCheckedChange = { viewModel.toggleBatchTracking() })
                 }
@@ -194,36 +220,42 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "গ্রাহক ও লেনদেন") {
+        SettingsCard(title = if (isBangla) "গ্রাহক ও লেনদেন" else "Customers & Transactions") {
             SettingsRow(
                 icon = Icons.Default.Timer,
-                title = "ক্রেডিট লিমিট",
-                subtitle = if (state.settings.defaultCreditLimit > 0) "৳${state.settings.defaultCreditLimit.toLong()}" else "সীমাহীন",
+                title = if (isBangla) "ক্রেডিট লিমিট" else "Credit Limit",
+                subtitle = if (state.settings.defaultCreditLimit > 0)
+                    "৳${state.settings.defaultCreditLimit.toLong()}"
+                else
+                    (if (isBangla) "সীমাহীন" else "Unlimited"),
                 onClick = { viewModel.showCreditLimitDialog() }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Delete,
-                title = "মুছার সময়সীমা",
-                subtitle = "${state.settings.deleteWindowHours} ঘন্টা",
+                title = if (isBangla) "মুছার সময়সীমা" else "Delete Window",
+                subtitle = "${state.settings.deleteWindowHours} ${if (isBangla) "ঘন্টা" else "hours"}",
                 onClick = { viewModel.showDeleteWindowDialog() }
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "নোটিফিকেশন") {
+        SettingsCard(title = if (isBangla) "নোটিফিকেশন" else "Notifications") {
             SettingsRow(
                 icon = Icons.Default.Schedule,
-                title = "বিক্রয় রিমাইন্ডার সময়",
+                title = if (isBangla) "বিক্রয় রিমাইন্ডার সময়" else "Sale Reminder",
                 subtitle = "${state.settings.saleReminderHour}:${String.format("%02d", state.settings.saleReminderMinute)}",
                 onClick = { viewModel.showReminderTimeDialog() }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Notifications,
-                title = "মাসিক রিপোর্ট রিমাইন্ডার",
-                subtitle = if (state.settings.monthlyReportReminder) "চালু" else "বন্ধ",
+                title = if (isBangla) "মাসিক রিপোর্ট রিমাইন্ডার" else "Monthly Report",
+                subtitle = if (state.settings.monthlyReportReminder)
+                    (if (isBangla) "চালু" else "On")
+                else
+                    (if (isBangla) "বন্ধ" else "Off"),
                 trailing = {
                     Switch(checked = state.settings.monthlyReportReminder, onCheckedChange = { viewModel.toggleMonthlyReport() })
                 }
@@ -232,29 +264,32 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "নেভিগেশন") {
+        SettingsCard(title = if (isBangla) "নেভিগেশন" else "Navigation") {
             SettingsRow(
                 icon = Icons.Default.Dashboard,
-                title = "নেভিগেশন অর্ডার",
-                subtitle = "নিচের মেনুর অর্ডার পরিবর্তন",
+                title = if (isBangla) "নেভিগেশন অর্ডার" else "Nav Order",
+                subtitle = if (isBangla) "নিচের মেনুর অর্ডার পরিবর্তন" else "Change bottom menu order",
                 onClick = { viewModel.showNavOrderEditor() }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Dashboard,
-                title = "দ্রুত অ্যাকশন",
-                subtitle = "ড্যাশবোর্ডে কোন বাটন দেখাবে",
+                title = if (isBangla) "দ্রুত অ্যাকশন" else "Quick Actions",
+                subtitle = if (isBangla) "ড্যাশবোর্ডে কোন বাটন দেখাবে" else "Which buttons on dashboard",
                 onClick = { viewModel.showQuickActionsEditor() }
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "ডেটা ও ব্যাকআপ") {
+        SettingsCard(title = if (isBangla) "ডেটা ও ব্যাকআপ" else "Data & Backup") {
             SettingsRow(
                 icon = Icons.Default.CloudUpload,
-                title = "অটো ব্যাকআপ",
-                subtitle = if (state.settings.autoBackupEnabled) "চালু (${if (state.settings.backupFrequency == "daily") "প্রতিদিন" else "সাপ্তাহিক"})" else "বন্ধ",
+                title = if (isBangla) "অটো ব্যাকআপ" else "Auto Backup",
+                subtitle = if (state.settings.autoBackupEnabled)
+                    "${if (isBangla) "চালু" else "On"} (${if (state.settings.backupFrequency == "daily") (if (isBangla) "প্রতিদিন" else "Daily") else (if (isBangla) "সাপ্তাহিক" else "Weekly")})"
+                else
+                    (if (isBangla) "বন্ধ" else "Off"),
                 trailing = {
                     Switch(
                         checked = state.settings.autoBackupEnabled,
@@ -265,15 +300,21 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.Schedule,
-                title = "ব্যাকআপ ফ্রিকোয়েন্সি",
-                subtitle = if (state.settings.backupFrequency == "daily") "প্রতিদিন" else "সাপ্তাহিক",
+                title = if (isBangla) "ব্যাকআপ ফ্রিকোয়েন্সি" else "Backup Frequency",
+                subtitle = if (state.settings.backupFrequency == "daily")
+                    (if (isBangla) "প্রতিদিন" else "Daily")
+                else
+                    (if (isBangla) "সাপ্তাহিক" else "Weekly"),
                 onClick = { viewModel.showBackupDialog() }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.CloudUpload,
-                title = "এখনই ব্যাকআপ নিন",
-                subtitle = if (state.settings.lastBackupTime > 0) "সর্বশেষ: ${SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(state.settings.lastBackupTime))}" else "কখনো ব্যাকআপ নেয়া হয়নি",
+                title = if (isBangla) "এখনই ব্যাকআপ নিন" else "Backup Now",
+                subtitle = if (state.settings.lastBackupTime > 0)
+                    "${if (isBangla) "সর্বশেষ" else "Last"}: ${SimpleDateFormat("dd MMM, hh:mm a", Locale.getDefault()).format(Date(state.settings.lastBackupTime))}"
+                else
+                    (if (isBangla) "কখনো ব্যাকআপ নেয়া হয়নি" else "Never backed up"),
                 onClick = { viewModel.performManualBackup() },
                 trailing = {
                     if (state.isBackingUp) {
@@ -286,15 +327,15 @@ fun SettingsScreen(
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.FileDownload,
-                title = "ডেটা এক্সপোর্ট",
-                subtitle = "JSON / CSV ফরম্যাট",
+                title = if (isBangla) "ডেটা এক্সপোর্ট" else "Data Export",
+                subtitle = "JSON / CSV",
                 onClick = { viewModel.showDataExportDialog() }
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsRow(
                 icon = Icons.Default.FileUpload,
-                title = "ডেটা ইম্পোর্ট",
-                subtitle = "JSON ফাইল থেকে পুনরুদ্ধার",
+                title = if (isBangla) "ডেটা ইম্পোর্ট" else "Data Import",
+                subtitle = if (isBangla) "JSON ফাইল থেকে পুনরুদ্ধার" else "Restore from JSON",
                 onClick = { viewModel.showDataImportDialog() }
             )
         }
@@ -307,19 +348,19 @@ fun SettingsScreen(
         ) {
             SettingsRow(
                 icon = Icons.Default.ClearAll,
-                title = "সব ডেটা মুছুন",
-                subtitle = "সমস্ত তথ্য স্থায়ীভাবে মুছে ফেলুন",
+                title = if (isBangla) "সব ডেটা মুছুন" else "Clear All Data",
+                subtitle = if (isBangla) "সমস্ত তথ্য স্থায়ীভাবে মুছে ফেলুন" else "Permanently delete all data",
                 onClick = { viewModel.showDeleteConfirm() }
             )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        SettingsCard(title = "অ্যাপ") {
+        SettingsCard(title = if (isBangla) "অ্যাপ" else "App") {
             SettingsRow(
                 icon = Icons.Default.Info,
-                title = "সম্পর্কে",
-                subtitle = "Hisab v1.0"
+                title = if (isBangla) "সম্পর্কে" else "About",
+                subtitle = "Hisab v2.0"
             )
         }
 
@@ -327,30 +368,31 @@ fun SettingsScreen(
     }
 
     // Dialogs
-    PinSetupDialog(state, viewModel)
-    ShopEditDialog(state, viewModel)
-    ThemeSelectorDialog(state, viewModel)
-    FontSelectorDialog(state, viewModel)
-    CreditLimitDialog(state, viewModel)
-    DeleteWindowDialog(state, viewModel)
-    ReminderTimeDialog(state, viewModel)
-    NavOrderDialog(state, viewModel)
-    QuickActionsDialog(state, viewModel)
-    DataExportDialog(state, viewModel, context)
-    DataImportDialog(state, viewModel)
-    DeleteConfirmDialog(state, viewModel)
-    BackupFrequencyDialog(state, viewModel)
+    PinSetupDialog(state, viewModel, isBangla)
+    ShopEditDialog(state, viewModel, isBangla)
+    ThemeSelectorDialog(state, viewModel, isBangla)
+    FontSelectorDialog(state, viewModel, isBangla)
+    CreditLimitDialog(state, viewModel, isBangla)
+    DeleteWindowDialog(state, viewModel, isBangla)
+    ReminderTimeDialog(state, viewModel, isBangla)
+    NavOrderDialog(state, viewModel, isBangla)
+    QuickActionsDialog(state, viewModel, isBangla)
+    DataExportDialog(state, viewModel, context, isBangla)
+    DataImportDialog(state, viewModel, isBangla)
+    DeleteConfirmDialog(state, viewModel, isBangla)
+    BackupFrequencyDialog(state, viewModel, isBangla)
 }
 
 @Composable
-private fun BackupFrequencyDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun BackupFrequencyDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showBackupDialog) return
     AlertDialog(
         onDismissRequest = { viewModel.hideBackupDialog() },
-        title = { Text("ব্যাকআপ ফ্রিকোয়েন্সি") },
+        title = { Text(if (isBangla) "ব্যাকআপ ফ্রিকোয়েন্সি" else "Backup Frequency") },
         text = {
             Column {
-                listOf("daily" to "প্রতিদিন", "weekly" to "সাপ্তাহিক").forEach { (key, label) ->
+                val items = if (isBangla) listOf("daily" to "প্রতিদিন", "weekly" to "সাপ্তাহিক") else listOf("daily" to "Daily", "weekly" to "Weekly")
+                items.forEach { (key, label) ->
                     TextButton(
                         onClick = { viewModel.setBackupFrequency(key); viewModel.hideBackupDialog() },
                         modifier = Modifier.fillMaxWidth()
@@ -360,7 +402,7 @@ private fun BackupFrequencyDialog(state: SettingsState, viewModel: SettingsViewM
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { viewModel.hideBackupDialog() }) { Text("বাতিল") } }
+        confirmButton = { TextButton(onClick = { viewModel.hideBackupDialog() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
@@ -419,12 +461,12 @@ private fun SettingsRow(
 }
 
 @Composable
-private fun PinSetupDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun PinSetupDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showPinDialog) return
     val dialogTitle = when (state.pinMode) {
-        PinMode.SETUP -> "পিন সেটআপ"
-        PinMode.CHANGE -> if (state.pinStep == 1) "পুরনো পিন" else "নতুন পিন"
-        PinMode.DISABLE -> "পিন সরান"
+        PinMode.SETUP -> if (isBangla) "পিন সেটআপ" else "Pin Setup"
+        PinMode.CHANGE -> if (state.pinStep == 1) (if (isBangla) "পুরনো পিন" else "Old Pin") else (if (isBangla) "নতুন পিন" else "New Pin")
+        PinMode.DISABLE -> if (isBangla) "পিন সরান" else "Remove Pin"
     }
     AlertDialog(
         onDismissRequest = { viewModel.hidePinSetup() },
@@ -432,17 +474,17 @@ private fun PinSetupDialog(state: SettingsState, viewModel: SettingsViewModel) {
         text = {
             Column {
                 val promptText = when {
-                    state.pinMode == PinMode.DISABLE -> "পিন দিন"
-                    state.pinMode == PinMode.CHANGE && state.pinStep == 1 -> "বর্তমান পিন দিন"
-                    state.pinStep == 1 -> "নতুন ৪-ডিজিটের পিন দিন"
-                    else -> "পিন আবার দিন"
+                    state.pinMode == PinMode.DISABLE -> if (isBangla) "পিন দিন" else "Enter PIN"
+                    state.pinMode == PinMode.CHANGE && state.pinStep == 1 -> if (isBangla) "বর্তমান পিন দিন" else "Enter current PIN"
+                    state.pinStep == 1 -> if (isBangla) "নতুন ৪-ডিজিটের পিন দিন" else "Enter new 4-digit PIN"
+                    else -> if (isBangla) "পিন আবার দিন" else "Re-enter PIN"
                 }
                 Text(promptText)
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = if (state.pinStep == 1) state.pinInput else state.pinConfirm,
                     onValueChange = { if (state.pinStep == 1) viewModel.setPinInput(it) else viewModel.setPinConfirm(it) },
-                    modifier = Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text("পিন") }
+                    modifier = Modifier.fillMaxWidth(), singleLine = true, placeholder = { Text(if (isBangla) "পিন" else "PIN") }
                 )
                 state.pinError?.let {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -452,38 +494,39 @@ private fun PinSetupDialog(state: SettingsState, viewModel: SettingsViewModel) {
         },
         confirmButton = {
             val (text, enabled, onClick) = when {
-                state.pinMode == PinMode.DISABLE -> Triple("নিশ্চিত", state.pinInput.length == 4, { viewModel.verifyAndProceed() })
-                state.pinMode == PinMode.CHANGE && state.pinStep == 1 -> Triple("পরবর্তী", state.pinInput.length == 4, { viewModel.verifyAndProceed() })
-                state.pinStep == 1 -> Triple("পরবর্তী", state.pinInput.length == 4, { viewModel.nextPinStep() })
-                else -> Triple("সংরক্ষণ", state.pinConfirm.length == 4 && state.pinInput == state.pinConfirm, { viewModel.savePin() })
+                state.pinMode == PinMode.DISABLE -> Triple(if (isBangla) "নিশ্চিত" else "Confirm", state.pinInput.length == 4, { viewModel.verifyAndProceed() })
+                state.pinMode == PinMode.CHANGE && state.pinStep == 1 -> Triple(if (isBangla) "পরবর্তী" else "Next", state.pinInput.length == 4, { viewModel.verifyAndProceed() })
+                state.pinStep == 1 -> Triple(if (isBangla) "পরবর্তী" else "Next", state.pinInput.length == 4, { viewModel.nextPinStep() })
+                else -> Triple(if (isBangla) "সংরক্ষণ" else "Save", state.pinConfirm.length == 4 && state.pinInput == state.pinConfirm, { viewModel.savePin() })
             }
             Button(onClick = onClick, enabled = enabled) { Text(text) }
         },
-        dismissButton = { TextButton(onClick = { viewModel.hidePinSetup() }) { Text("বাতিল") } }
+        dismissButton = { TextButton(onClick = { viewModel.hidePinSetup() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun ShopEditDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun ShopEditDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showShopEdit) return
     AlertDialog(
         onDismissRequest = { viewModel.hideShopEdit() },
-        title = { Text("দোকানের নাম") },
+        title = { Text(if (isBangla) "দোকানের নাম" else "Shop Name") },
         text = { OutlinedTextField(value = state.editShopName, onValueChange = viewModel::setEditShopName, modifier = Modifier.fillMaxWidth(), singleLine = true) },
-        confirmButton = { Button(onClick = { viewModel.saveShopName() }) { Text("সংরক্ষণ") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideShopEdit() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.saveShopName() }) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideShopEdit() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun ThemeSelectorDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun ThemeSelectorDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showThemeSelector) return
     AlertDialog(
         onDismissRequest = { viewModel.hideThemeSelector() },
-        title = { Text("থিম") },
+        title = { Text(if (isBangla) "থিম" else "Theme") },
         text = {
             Column {
-                listOf("system" to "সিস্টেম", "light" to "হালকা", "dark" to "গাঢ়").forEach { (key, label) ->
+                val items = if (isBangla) listOf("system" to "সিস্টেম", "light" to "হালকা", "dark" to "গাঢ়") else listOf("system" to "System", "light" to "Light", "dark" to "Dark")
+                items.forEach { (key, label) ->
                     TextButton(
                         onClick = { viewModel.setThemeMode(key) },
                         modifier = Modifier.fillMaxWidth()
@@ -493,19 +536,20 @@ private fun ThemeSelectorDialog(state: SettingsState, viewModel: SettingsViewMod
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { viewModel.hideThemeSelector() }) { Text("বাতিল") } }
+        confirmButton = { TextButton(onClick = { viewModel.hideThemeSelector() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun FontSelectorDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun FontSelectorDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showFontSelector) return
     AlertDialog(
         onDismissRequest = { viewModel.hideFontSelector() },
-        title = { Text("ফন্ট সাইজ") },
+        title = { Text(if (isBangla) "ফন্ট সাইজ" else "Font Size") },
         text = {
             Column {
-                listOf("small" to "ছোট", "medium" to "মধ্যম", "large" to "বড়").forEach { (key, label) ->
+                val items = if (isBangla) listOf("small" to "ছোট", "medium" to "মধ্যম", "large" to "বড়") else listOf("small" to "Small", "medium" to "Medium", "large" to "Large")
+                items.forEach { (key, label) ->
                     TextButton(
                         onClick = { viewModel.setFontSize(key) },
                         modifier = Modifier.fillMaxWidth()
@@ -515,19 +559,19 @@ private fun FontSelectorDialog(state: SettingsState, viewModel: SettingsViewMode
                 }
             }
         },
-        confirmButton = { TextButton(onClick = { viewModel.hideFontSelector() }) { Text("বাতিল") } }
+        confirmButton = { TextButton(onClick = { viewModel.hideFontSelector() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun CreditLimitDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun CreditLimitDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showCreditLimitDialog) return
     AlertDialog(
         onDismissRequest = { viewModel.hideCreditLimitDialog() },
-        title = { Text("ক্রেডিট লিমিট") },
+        title = { Text(if (isBangla) "ক্রেডিট লিমিট" else "Credit Limit") },
         text = {
             Column {
-                Text("প্রতি গ্রাহকের জন্য সর্বোচ্চ বাকির পরিমাণ (০ = সীমাহীন)")
+                Text(if (isBangla) "প্রতি গ্রাহকের জন্য সর্বোচ্চ বাকির পরিমাণ (০ = সীমাহীন)" else "Maximum credit per customer (0 = unlimited)")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.creditLimitInput,
@@ -538,20 +582,20 @@ private fun CreditLimitDialog(state: SettingsState, viewModel: SettingsViewModel
                 )
             }
         },
-        confirmButton = { Button(onClick = { viewModel.saveCreditLimit() }) { Text("সংরক্ষণ") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideCreditLimitDialog() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.saveCreditLimit() }) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideCreditLimitDialog() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun DeleteWindowDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun DeleteWindowDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showDeleteWindowDialog) return
     AlertDialog(
         onDismissRequest = { viewModel.hideDeleteWindowDialog() },
-        title = { Text("মুছার সময়সীমা") },
+        title = { Text(if (isBangla) "মুছার সময়সীমা" else "Delete Window") },
         text = {
             Column {
-                Text("কত ঘন্টার মধ্যে লেনদেন মুছতে পারবেন?")
+                Text(if (isBangla) "কত ঘন্টার মধ্যে লেনদেন মুছতে পারবেন?" else "Within how many hours can you delete a transaction?")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.deleteWindowInput,
@@ -562,24 +606,24 @@ private fun DeleteWindowDialog(state: SettingsState, viewModel: SettingsViewMode
                 )
             }
         },
-        confirmButton = { Button(onClick = { viewModel.saveDeleteWindow() }) { Text("সংরক্ষণ") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideDeleteWindowDialog() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.saveDeleteWindow() }) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideDeleteWindowDialog() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun ReminderTimeDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun ReminderTimeDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showReminderTimeDialog) return
     AlertDialog(
         onDismissRequest = { viewModel.hideReminderTimeDialog() },
-        title = { Text("রিমাইন্ডার সময়") },
+        title = { Text(if (isBangla) "রিমাইন্ডার সময়" else "Reminder Time") },
         text = {
             Column {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = state.reminderHour,
                         onValueChange = viewModel::setReminderHour,
-                        label = { Text("ঘন্টা") },
+                        label = { Text(if (isBangla) "ঘন্টা" else "Hour") },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
@@ -587,7 +631,7 @@ private fun ReminderTimeDialog(state: SettingsState, viewModel: SettingsViewMode
                     OutlinedTextField(
                         value = state.reminderMinute,
                         onValueChange = viewModel::setReminderMinute,
-                        label = { Text("মিনিট") },
+                        label = { Text(if (isBangla) "মিনিট" else "Minute") },
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         singleLine = true
@@ -595,21 +639,21 @@ private fun ReminderTimeDialog(state: SettingsState, viewModel: SettingsViewMode
                 }
             }
         },
-        confirmButton = { Button(onClick = { viewModel.saveReminderTime() }) { Text("সংরক্ষণ") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideReminderTimeDialog() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.saveReminderTime() }) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideReminderTimeDialog() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun NavOrderDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun NavOrderDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showNavOrderEditor) return
     val order = remember { mutableStateOf(state.settings.navOrder) }
     AlertDialog(
         onDismissRequest = { viewModel.hideNavOrderEditor() },
-        title = { Text("নেভিগেশন অর্ডার") },
+        title = { Text(if (isBangla) "নেভিগেশন অর্ডার" else "Navigation Order") },
         text = {
             Column {
-                Text("কমা দিয়ে আলাদা করুন: dashboard,inventory,sale,customers,more")
+                Text(if (isBangla) "কমা দিয়ে আলাদা করুন: dashboard,inventory,sale,customers,more" else "Separate with commas: dashboard,inventory,sale,customers,more")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = order.value,
@@ -619,21 +663,21 @@ private fun NavOrderDialog(state: SettingsState, viewModel: SettingsViewModel) {
                 )
             }
         },
-        confirmButton = { Button(onClick = { viewModel.setNavOrder(order.value) }) { Text("সংরক্ষণ") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideNavOrderEditor() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.setNavOrder(order.value) }) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideNavOrderEditor() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun QuickActionsDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun QuickActionsDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showQuickActionsEditor) return
     val actions = remember { mutableStateOf(state.settings.quickActions) }
     AlertDialog(
         onDismissRequest = { viewModel.hideQuickActionsEditor() },
-        title = { Text("দ্রুত অ্যাকশন") },
+        title = { Text(if (isBangla) "দ্রুত অ্যাকশন" else "Quick Actions") },
         text = {
             Column {
-                Text("কমা দিয়ে আলাদা করুন: sale,stock,expense,customer,purchase")
+                Text(if (isBangla) "কমা দিয়ে আলাদা করুন: sale,stock,expense,customer,purchase" else "Separate with commas: sale,stock,expense,customer,purchase")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = actions.value,
@@ -643,20 +687,20 @@ private fun QuickActionsDialog(state: SettingsState, viewModel: SettingsViewMode
                 )
             }
         },
-        confirmButton = { Button(onClick = { viewModel.setQuickActions(actions.value) }) { Text("সংরক্ষণ") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideQuickActionsEditor() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.setQuickActions(actions.value) }) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideQuickActionsEditor() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun DataExportDialog(state: SettingsState, viewModel: SettingsViewModel, context: android.content.Context) {
+private fun DataExportDialog(state: SettingsState, viewModel: SettingsViewModel, context: android.content.Context, isBangla: Boolean) {
     if (!state.showDataExportDialog) return
     AlertDialog(
         onDismissRequest = { viewModel.hideDataExportDialog() },
-        title = { Text("ডেটা এক্সপোর্ট") },
+        title = { Text(if (isBangla) "ডেটা এক্সপোর্ট" else "Data Export") },
         text = {
             Column {
-                Text("ফরম্যাট নির্বাচন করুন:")
+                Text(if (isBangla) "ফরম্যাট নির্বাচন করুন:" else "Select format:")
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(
@@ -672,20 +716,20 @@ private fun DataExportDialog(state: SettingsState, viewModel: SettingsViewModel,
                 }
             }
         },
-        confirmButton = { Button(onClick = { viewModel.exportData(context) }) { Text("এক্সপোর্ট") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideDataExportDialog() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.exportData(context) }) { Text(if (isBangla) "এক্সপোর্ট" else "Export") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideDataExportDialog() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun DataImportDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun DataImportDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showDataImportDialog) return
     AlertDialog(
         onDismissRequest = { viewModel.hideDataImportDialog() },
-        title = { Text("ডেটা ইম্পোর্ট") },
+        title = { Text(if (isBangla) "ডেটা ইম্পোর্ট" else "Data Import") },
         text = {
             Column {
-                Text("JSON ডেটা পেস্ট করুন:")
+                Text(if (isBangla) "JSON ডেটা পেস্ট করুন:" else "Paste JSON data:")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = state.importData,
@@ -699,24 +743,24 @@ private fun DataImportDialog(state: SettingsState, viewModel: SettingsViewModel)
                 }
             }
         },
-        confirmButton = { Button(onClick = { viewModel.importData() }) { Text("ইম্পোর্ট") } },
-        dismissButton = { TextButton(onClick = { viewModel.hideDataImportDialog() }) { Text("বাতিল") } }
+        confirmButton = { Button(onClick = { viewModel.importData() }) { Text(if (isBangla) "ইম্পোর্ট" else "Import") } },
+        dismissButton = { TextButton(onClick = { viewModel.hideDataImportDialog() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }
 
 @Composable
-private fun DeleteConfirmDialog(state: SettingsState, viewModel: SettingsViewModel) {
+private fun DeleteConfirmDialog(state: SettingsState, viewModel: SettingsViewModel, isBangla: Boolean) {
     if (!state.showDeleteConfirm) return
     AlertDialog(
         onDismissRequest = { viewModel.hideDeleteConfirm() },
-        title = { Text("সব ডেটা মুছুন") },
-        text = { Text("সমস্ত তথ্য স্থায়ীভাবে মুছে যাবে! এই কাজ পূর্বাবস্থায় ফেরানো যাবে না। আপনি কি নিশ্চিত?") },
+        title = { Text(if (isBangla) "সব ডেটা মুছুন" else "Delete All Data") },
+        text = { Text(if (isBangla) "সমস্ত তথ্য স্থায়ীভাবে মুছে যাবে! এই কাজ পূর্বাবস্থায় ফেরানো যাবে না। আপনি কি নিশ্চিত?" else "All data will be permanently deleted! This action cannot be undone. Are you sure?") },
         confirmButton = {
             Button(
                 onClick = { viewModel.clearAllData() },
                 colors = ButtonDefaults.buttonColors(containerColor = RedExpense)
-            ) { Text("মুছুন", color = androidx.compose.ui.graphics.Color.White) }
+            ) { Text(if (isBangla) "মুছুন" else "Delete", color = androidx.compose.ui.graphics.Color.White) }
         },
-        dismissButton = { TextButton(onClick = { viewModel.hideDeleteConfirm() }) { Text("বাতিল") } }
+        dismissButton = { TextButton(onClick = { viewModel.hideDeleteConfirm() }) { Text(if (isBangla) "বাতিল" else "Cancel") } }
     )
 }

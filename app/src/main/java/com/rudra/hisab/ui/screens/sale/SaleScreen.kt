@@ -55,6 +55,7 @@ fun SaleScreen(
     viewModel: SaleViewModel
 ) {
     val state by viewModel.state.collectAsState()
+    val isBangla = state.isBangla
 
     Column(
         modifier = Modifier
@@ -62,7 +63,7 @@ fun SaleScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "নতুন বিক্রয়",
+            text = if (isBangla) "নতুন বিক্রয়" else "New Sale",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
@@ -84,7 +85,7 @@ fun SaleScreen(
                     Icon(Icons.Default.TrendingUp, contentDescription = null, tint = GreenProfit, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
-                        Text("আজকের বিক্রয়", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (isBangla) "আজকের বিক্রয়" else "Today's Sales", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(CurrencyFormatter.format(state.todaySalesTotal), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = GreenProfit)
                     }
                 }
@@ -100,7 +101,7 @@ fun SaleScreen(
                     Icon(Icons.Default.Sell, contentDescription = null, tint = GreenProfit, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(6.dp))
                     Column {
-                        Text("বিক্রয় সংখ্যা", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (isBangla) "বিক্রয় সংখ্যা" else "Sale Count", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text("${state.todaySaleCount}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = GreenProfit)
                     }
                 }
@@ -113,7 +114,7 @@ fun SaleScreen(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = viewModel::setSearchQuery,
-                placeholder = { Text("পণ্য খুঁজুন") },
+                placeholder = { Text(if (isBangla) "পণ্য খুঁজুন" else "Search products") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
@@ -139,7 +140,7 @@ fun SaleScreen(
                             .weight(1f),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("কোনো পণ্য নেই", style = MaterialTheme.typography.bodyLarge)
+                        Text(if (isBangla) "কোনো পণ্য নেই" else "No products", style = MaterialTheme.typography.bodyLarge)
                     }
                 } else {
                     FlowRow(
@@ -149,7 +150,8 @@ fun SaleScreen(
                         filteredProducts.forEach { product ->
                             ProductTile(
                                 product = product,
-                                onClick = { viewModel.selectProduct(product) }
+                                onClick = { viewModel.selectProduct(product) },
+                                isBangla = isBangla
                             )
                         }
                     }
@@ -162,7 +164,8 @@ fun SaleScreen(
                 onPaymentTypeChange = viewModel::setPaymentType,
                 onPaidAmountChange = viewModel::setPaidAmount,
                 onConfirm = viewModel::completeSale,
-                onCancel = viewModel::clearSelection
+                onCancel = viewModel::clearSelection,
+                isBangla = isBangla
             )
         }
     }
@@ -171,7 +174,8 @@ fun SaleScreen(
 @Composable
 private fun ProductTile(
     product: ProductEntity,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    isBangla: Boolean
 ) {
     Card(
         onClick = onClick,
@@ -189,7 +193,7 @@ private fun ProductTile(
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = product.nameBangla,
+                text = if (isBangla) product.nameBangla else product.name,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -201,7 +205,7 @@ private fun ProductTile(
                 fontWeight = FontWeight.Bold
             )
             Text(
-                text = "স্টক: ${product.currentStock.toInt()}",
+                text = if (isBangla) "স্টক: ${product.currentStock.toInt()}" else "Stock: ${product.currentStock.toInt()}",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -217,7 +221,8 @@ private fun SaleForm(
     onPaymentTypeChange: (SalePaymentType) -> Unit,
     onPaidAmountChange: (String) -> Unit,
     onConfirm: () -> Unit,
-    onCancel: () -> Unit
+    onCancel: () -> Unit,
+    isBangla: Boolean
 ) {
     val product = state.selectedProduct ?: return
 
@@ -232,7 +237,7 @@ private fun SaleForm(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = product.nameBangla,
+                text = if (isBangla) product.nameBangla else product.name,
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -244,14 +249,14 @@ private fun SaleForm(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "দাম: ${CurrencyFormatter.format(product.sellPrice)} / ${product.unit}",
+            text = if (isBangla) "দাম: ${CurrencyFormatter.format(product.sellPrice)} / ${product.unit}" else "Price: ${CurrencyFormatter.format(product.sellPrice)} / ${product.unit}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        Text("পরিমাণ", style = MaterialTheme.typography.titleMedium)
+        Text(if (isBangla) "পরিমাণ" else "Quantity", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
         OutlinedTextField(
             value = state.quantity,
@@ -265,14 +270,14 @@ private fun SaleForm(
         val totalAmount = (state.quantity.toDoubleOrNull() ?: 0.0) * (product.sellPrice)
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "মোট: ${CurrencyFormatter.format(totalAmount)}",
+            text = if (isBangla) "মোট: ${CurrencyFormatter.format(totalAmount)}" else "Total: ${CurrencyFormatter.format(totalAmount)}",
             style = MaterialTheme.typography.displayMedium,
             fontWeight = FontWeight.Bold,
             color = GreenProfit
         )
 
         Spacer(modifier = Modifier.height(24.dp))
-        Text("পরিশোধের ধরন", style = MaterialTheme.typography.titleMedium)
+        Text(if (isBangla) "পরিশোধের ধরন" else "Payment Type", style = MaterialTheme.typography.titleMedium)
         Spacer(modifier = Modifier.height(8.dp))
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             SalePaymentType.entries.forEach { type ->
@@ -282,9 +287,9 @@ private fun SaleForm(
                     label = {
                         Text(
                             when (type) {
-                                SalePaymentType.CASH -> "নগদ"
-                                SalePaymentType.CREDIT -> "বাকি"
-                                SalePaymentType.PARTIAL -> "আংশিক"
+                                SalePaymentType.CASH -> if (isBangla) "নগদ" else "Cash"
+                                SalePaymentType.CREDIT -> if (isBangla) "বাকি" else "Credit"
+                                SalePaymentType.PARTIAL -> if (isBangla) "আংশিক" else "Partial"
                             }
                         )
                     },
@@ -300,7 +305,7 @@ private fun SaleForm(
             OutlinedTextField(
                 value = state.paidAmount,
                 onValueChange = onPaidAmountChange,
-                label = { Text("পরিশোধিত পরিমাণ") },
+                label = { Text(if (isBangla) "পরিশোধিত পরিমাণ" else "Paid Amount") },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 singleLine = true
@@ -317,11 +322,11 @@ private fun SaleForm(
             enabled = !state.isSaving && state.quantity.toDoubleOrNull() ?: 0.0 > 0
         ) {
             if (state.isSaving) {
-                Text("হিসাব করা হচ্ছে...")
+                Text(if (isBangla) "হিসাব করা হচ্ছে..." else "Processing...")
             } else {
                 Icon(Icons.Default.Check, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("বিক্রয় নিশ্চিত", style = MaterialTheme.typography.titleLarge)
+                Text(if (isBangla) "বিক্রয় নিশ্চিত" else "Confirm Sale", style = MaterialTheme.typography.titleLarge)
             }
         }
 
@@ -331,7 +336,7 @@ private fun SaleForm(
                 colors = CardDefaults.cardColors(containerColor = GreenProfit.copy(alpha = 0.1f))
             ) {
                 Text(
-                    text = "বিক্রয় সফল!",
+                    text = if (isBangla) "বিক্রয় সফল!" else "Sale Successful!",
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),

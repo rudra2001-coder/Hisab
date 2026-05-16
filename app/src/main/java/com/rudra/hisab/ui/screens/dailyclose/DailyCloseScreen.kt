@@ -9,13 +9,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -24,7 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rudra.hisab.data.local.entity.DailySnapshotEntity
@@ -42,6 +42,7 @@ fun DailyCloseScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
+    val isBangla = state.isBangla
 
     Column(
         modifier = Modifier
@@ -50,7 +51,7 @@ fun DailyCloseScreen(
             .padding(16.dp)
     ) {
         Text(
-            text = "দৈনিক সমাপ্তি",
+            text = if (isBangla) "দৈনিক সমাপ্তি" else "Daily Close",
             style = MaterialTheme.typography.headlineLarge,
             fontWeight = FontWeight.Bold
         )
@@ -58,48 +59,98 @@ fun DailyCloseScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         if (state.isLoading) {
-            Text("লোড হচ্ছে...", style = MaterialTheme.typography.bodyLarge)
+            Text(
+                if (isBangla) "লোড হচ্ছে..." else "Loading...",
+                style = MaterialTheme.typography.bodyLarge
+            )
         } else if (state.isClosed) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = GreenProfit.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Default.CheckCircle, contentDescription = null, tint = GreenProfit, modifier = Modifier.padding(bottom = 12.dp))
-                    Text("দিন সফলভাবে বন্ধ!", style = MaterialTheme.typography.headlineSmall, color = GreenProfit, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isBangla) "দিন সফলভাবে বন্ধ!" else "Day closed successfully!",
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = GreenProfit,
+                        fontWeight = FontWeight.Bold
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("আগামীকাল আবার দেখা হবে", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(
+                        if (isBangla) "আগামীকাল আবার দেখা হবে" else "See you tomorrow",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         } else if (state.alreadyClosed) {
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(2.dp, RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = OrangeDue.copy(alpha = 0.1f))
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("আজকের হিসাব আগেই বন্ধ হয়েছে", style = MaterialTheme.typography.titleLarge, color = OrangeDue, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isBangla) "আজকের হিসাব আগেই বন্ধ হয়েছে" else "Today already closed",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = OrangeDue,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
         } else {
-            SummaryRow("আজকের বিক্রয়", state.totalSales, GreenProfit)
+            SummaryRow(
+                if (isBangla) "আজকের বিক্রয়" else "Today's Sales",
+                state.totalSales, GreenProfit
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            SummaryRow("নগদ বিক্রয়", state.cashSales, GreenProfit)
+            SummaryRow(
+                if (isBangla) "নগদ বিক্রয়" else "Cash Sales",
+                state.cashSales, GreenProfit
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            SummaryRow("বাকি বিক্রয়", state.creditSales, OrangeDue)
+            SummaryRow(
+                if (isBangla) "বাকি বিক্রয়" else "Credit Sales",
+                state.creditSales, OrangeDue
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            SummaryRow("আজকের খরচ", state.totalExpenses, RedExpense)
+            SummaryRow(
+                if (isBangla) "আজকের খরচ" else "Today's Expenses",
+                state.totalExpenses, RedExpense
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            SummaryRow("ক্রয়", state.totalPurchases, RedExpense)
+            SummaryRow(
+                if (isBangla) "ক্রয়" else "Purchases",
+                state.totalPurchases, RedExpense
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            SummaryRow("কতটি বিক্রয়", state.saleCount.toDouble(), MaterialTheme.colorScheme.onSurface)
+            SummaryRow(
+                if (isBangla) "কতটি বিক্রয়" else "Sale Count",
+                state.saleCount.toDouble(), MaterialTheme.colorScheme.onSurface
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            SummaryRow("নতুন বাকি", state.newDues, OrangeDue)
+            SummaryRow(
+                if (isBangla) "নতুন বাকি" else "New Dues",
+                state.newDues, OrangeDue
+            )
             Spacer(modifier = Modifier.height(6.dp))
-            SummaryRow("পেমেন্ট পেয়েছি", state.paymentsReceived, GreenProfit)
+            SummaryRow(
+                if (isBangla) "পেমেন্ট পেয়েছি" else "Payments Received",
+                state.paymentsReceived, GreenProfit
+            )
             Spacer(modifier = Modifier.height(12.dp))
 
             Card(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (state.netProfit >= 0) GreenProfit.copy(alpha = 0.1f)
                     else RedExpense.copy(alpha = 0.1f)
@@ -111,7 +162,11 @@ fun DailyCloseScreen(
                         .padding(16.dp),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text("নিট মুনাফা", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(
+                        if (isBangla) "নিট মুনাফা" else "Net Profit",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
                     Text(
                         text = CurrencyFormatter.format(state.netProfit),
                         style = MaterialTheme.typography.titleLarge,
@@ -128,10 +183,15 @@ fun DailyCloseScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                enabled = !state.isClosing
+                enabled = !state.isClosing,
+                shape = RoundedCornerShape(16.dp)
             ) {
                 Text(
-                    if (state.isClosing) "হিসাব বন্ধ হচ্ছে..." else "দিন বন্ধ করুন",
+                    if (state.isClosing) {
+                        if (isBangla) "হিসাব বন্ধ হচ্ছে..." else "Closing..."
+                    } else {
+                        if (isBangla) "দিন বন্ধ করুন" else "Close Day"
+                    },
                     style = MaterialTheme.typography.titleLarge
                 )
             }
@@ -140,14 +200,18 @@ fun DailyCloseScreen(
         if (state.pastSnapshots.isNotEmpty()) {
             Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "গত ৭ দিন",
+                text = if (isBangla) "গত ৭ দিন" else "Last 7 Days",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
 
             state.pastSnapshots.reversed().forEach { snapshot ->
-                PastSnapshotRow(snapshot = snapshot, dateFormat = dateFormat)
+                PastSnapshotRow(
+                    snapshot = snapshot,
+                    dateFormat = dateFormat,
+                    isBangla = isBangla
+                )
                 Spacer(modifier = Modifier.height(4.dp))
             }
         }
@@ -155,9 +219,12 @@ fun DailyCloseScreen(
 }
 
 @Composable
-private fun SummaryRow(label: String, amount: Double, color: Color) {
+private fun SummaryRow(label: String, amount: Double, color: androidx.compose.ui.graphics.Color) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(1.dp, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
         )
@@ -181,9 +248,16 @@ private fun SummaryRow(label: String, amount: Double, color: Color) {
 }
 
 @Composable
-private fun PastSnapshotRow(snapshot: DailySnapshotEntity, dateFormat: SimpleDateFormat) {
+private fun PastSnapshotRow(
+    snapshot: DailySnapshotEntity,
+    dateFormat: SimpleDateFormat,
+    isBangla: Boolean
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(1.dp, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
@@ -200,12 +274,12 @@ private fun PastSnapshotRow(snapshot: DailySnapshotEntity, dateFormat: SimpleDat
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = "বিক্রয়: ${CurrencyFormatter.format(snapshot.totalSales)}",
+                    text = "${if (isBangla) "বিক্রয়" else "Sales"}: ${CurrencyFormatter.format(snapshot.totalSales)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = GreenProfit
                 )
                 Text(
-                    text = "খরচ: ${CurrencyFormatter.format(snapshot.totalExpenses)}",
+                    text = "${if (isBangla) "খরচ" else "Expenses"}: ${CurrencyFormatter.format(snapshot.totalExpenses)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = RedExpense
                 )

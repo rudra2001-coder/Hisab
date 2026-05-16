@@ -42,7 +42,8 @@ data class AnalyticsState(
     val cashFlow: List<Pair<String, Double>> = emptyList(),
     val customStartDate: LocalDate = LocalDate.now().minusDays(30),
     val customEndDate: LocalDate = LocalDate.now(),
-    val showDatePicker: Boolean = false
+    val showDatePicker: Boolean = false,
+    val isBangla: Boolean = true
 )
 
 @HiltViewModel
@@ -64,7 +65,8 @@ class AnalyticsViewModel @Inject constructor(
 
     private fun loadAnalytics() {
         viewModelScope.launch {
-            _state.value = _state.value.copy(isLoading = true)
+            val settings = appPreferences.settings.first()
+            _state.value = _state.value.copy(isLoading = true, isBangla = settings.isBangla)
 
             val now = LocalDate.now()
             val sevenDaysAgo = now.minusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()

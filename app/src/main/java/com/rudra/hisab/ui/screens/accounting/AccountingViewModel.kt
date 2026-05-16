@@ -8,12 +8,14 @@ import com.rudra.hisab.data.local.entity.LedgerEntryType
 import com.rudra.hisab.data.local.entity.PaymentEntity
 import com.rudra.hisab.data.local.entity.PaymentMethod
 import com.rudra.hisab.data.local.entity.PaymentType
+import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.LedgerEntryRepository
 import com.rudra.hisab.data.repository.PaymentRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -40,7 +42,8 @@ data class AccountingUiState(
     val cashEntryType: String = "CASH_IN",
     val cashEntryAmount: String = "",
     val cashEntryDescription: String = "",
-    val cashEntryMethod: PaymentMethod = PaymentMethod.CASH
+    val cashEntryMethod: PaymentMethod = PaymentMethod.CASH,
+    val isBangla: Boolean = true
 )
 
 enum class AccountingTab { CASH_BOOK, LEDGER, EXPENSES }
@@ -48,7 +51,8 @@ enum class AccountingTab { CASH_BOOK, LEDGER, EXPENSES }
 @HiltViewModel
 class AccountingViewModel @Inject constructor(
     private val paymentRepository: PaymentRepository,
-    private val ledgerEntryRepository: LedgerEntryRepository
+    private val ledgerEntryRepository: LedgerEntryRepository,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AccountingUiState())
@@ -57,6 +61,14 @@ class AccountingViewModel @Inject constructor(
     init {
         observeCashBook()
         observeBalances()
+        loadSettings()
+    }
+
+    private fun loadSettings() {
+        viewModelScope.launch {
+            val settings = appPreferences.settings.first()
+            _uiState.value = _uiState.value.copy(isBangla = settings.isBangla)
+        }
     }
 
     private fun observeCashBook() {

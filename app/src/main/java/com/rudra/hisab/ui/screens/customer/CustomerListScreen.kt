@@ -34,12 +34,14 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -50,6 +52,9 @@ import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.OrangeDue
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.CurrencyFormatter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @Composable
 fun CustomerListScreen(
@@ -57,8 +62,11 @@ fun CustomerListScreen(
     onCustomerClick: (Long) -> Unit
 ) {
     val state by viewModel.listState.collectAsState()
-    val filteredCustomers = viewModel.getFilteredCustomers()
+    val filteredCustomers by remember(state.customers, state.searchQuery) {
+        derivedStateOf { viewModel.getFilteredCustomers() }
+    }
     var customerToDelete by remember { mutableStateOf<CustomerEntity?>(null) }
+    val isBangla = true // will be added to state
 
     Scaffold(
         floatingActionButton = {
@@ -66,7 +74,7 @@ fun CustomerListScreen(
                 onClick = { viewModel.showAddCustomerDialog() },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = "নতুন গ্রাহক")
+                Icon(Icons.Default.Add, contentDescription = "Add Customer")
             }
         }
     ) { padding ->
@@ -77,7 +85,7 @@ fun CustomerListScreen(
                 .padding(16.dp)
         ) {
             Text(
-                text = "গ্রাহক",
+                text = "Customers",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -89,30 +97,39 @@ fun CustomerListScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Card(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .shadow(2.dp, RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = BlueInfo.copy(alpha = 0.08f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("মোট গ্রাহক", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Total", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(state.customers.size.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = BlueInfo)
                     }
                 }
                 Card(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .shadow(2.dp, RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = OrangeDue.copy(alpha = 0.08f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("মোট বাকি", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text(CurrencyFormatter.format(state.totalDues), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = OrangeDue)
+                        Text("Due", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(CurrencyFormatter.format(state.totalDues), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = OrangeDue)
                     }
                 }
                 val paidCount = state.customers.count { it.totalDue <= 0 }
                 Card(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .shadow(2.dp, RoundedCornerShape(12.dp)),
+                    shape = RoundedCornerShape(12.dp),
                     colors = CardDefaults.cardColors(containerColor = GreenProfit.copy(alpha = 0.08f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text("পরিশোধিত", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Paid", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(paidCount.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = GreenProfit)
                     }
                 }
@@ -123,10 +140,11 @@ fun CustomerListScreen(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = viewModel::setSearchQuery,
-                placeholder = { Text("গ্রাহক খুঁজুন") },
+                placeholder = { Text("Search customer") },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -138,9 +156,9 @@ fun CustomerListScreen(
                 ) {
                     Text(
                         text = if (state.customers.isEmpty())
-                            "কোনো গ্রাহক নেই — বাকিতে বিক্রয় করলে গ্রাহক যোগ হবে"
+                            "No customers yet — Credit sales will add customers"
                         else
-                            "কোনো গ্রাহক পাওয়া যায়নি",
+                            "No customers found",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -164,25 +182,25 @@ fun CustomerListScreen(
         if (c.totalDue > 0) {
             AlertDialog(
                 onDismissRequest = { customerToDelete = null },
-                title = { Text("মুছতে পারবেন না") },
-                text = { Text("এই গ্রাহকের ৳${CurrencyFormatter.format(c.totalDue)} বাকি আছে। আগে পরিশোধ নিন।") },
+                title = { Text("Cannot Delete") },
+                text = { Text("This customer has due of ${CurrencyFormatter.format(c.totalDue)}. Please receive payment first.") },
                 confirmButton = {
-                    TextButton(onClick = { customerToDelete = null }) { Text("ঠিক আছে") }
+                    TextButton(onClick = { customerToDelete = null }) { Text("OK") }
                 }
             )
         } else {
             AlertDialog(
                 onDismissRequest = { customerToDelete = null },
-                title = { Text("গ্রাহক মুছুন") },
-                text = { Text("আপনি কি ${c.name} কে মুছতে চান?") },
+                title = { Text("Delete Customer") },
+                text = { Text("Are you sure you want to delete ${c.name}?") },
                 confirmButton = {
                     Button(onClick = {
                         viewModel.deleteCustomer(c)
                         customerToDelete = null
-                    }) { Text("মুছুন") }
+                    }) { Text("Delete") }
                 },
                 dismissButton = {
-                    TextButton(onClick = { customerToDelete = null }) { Text("বাতিল") }
+                    TextButton(onClick = { customerToDelete = null }) { Text("Cancel") }
                 }
             )
         }
@@ -191,24 +209,26 @@ fun CustomerListScreen(
     if (state.showAddDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.hideAddCustomerDialog() },
-            title = { Text("নতুন গ্রাহক") },
+            title = { Text("New Customer") },
             text = {
                 Column {
                     OutlinedTextField(
                         value = state.newCustomerName,
                         onValueChange = viewModel::setNewCustomerName,
-                        label = { Text("নাম") },
+                        label = { Text("Name") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = state.newCustomerPhone,
                         onValueChange = viewModel::setNewCustomerPhone,
-                        label = { Text("ফোন নম্বর") },
+                        label = { Text("Phone") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        shape = RoundedCornerShape(12.dp)
                     )
                     state.phoneError?.let { error ->
                         Text(
@@ -222,9 +242,10 @@ fun CustomerListScreen(
                     OutlinedTextField(
                         value = state.newCustomerAddress,
                         onValueChange = viewModel::setNewCustomerAddress,
-                        label = { Text("ঠিকানা") },
+                        label = { Text("Address") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
             },
@@ -232,10 +253,10 @@ fun CustomerListScreen(
                 Button(
                     onClick = { viewModel.addCustomer() },
                     enabled = state.newCustomerName.isNotBlank()
-                ) { Text("যোগ করুন") }
+                ) { Text("Add") }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.hideAddCustomerDialog() }) { Text("বাতিল") }
+                TextButton(onClick = { viewModel.hideAddCustomerDialog() }) { Text("Cancel") }
             }
         )
     }
@@ -251,10 +272,12 @@ private fun CustomerCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .shadow(2.dp, RoundedCornerShape(12.dp))
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             ),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
@@ -265,12 +288,25 @@ private fun CustomerCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                Icons.Default.Person,
-                contentDescription = null,
-                modifier = Modifier.size(32.dp),
-                tint = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Card(
+                modifier = Modifier.size(40.dp),
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                )
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        modifier = Modifier.size(22.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -286,9 +322,9 @@ private fun CustomerCard(
                     )
                 }
                 if (customer.lastTransactionAt != null) {
-                    val dateFormat = java.text.SimpleDateFormat("dd/MM/yy", java.util.Locale.getDefault())
+                    val dateFormat = SimpleDateFormat("dd/MM/yy", Locale.getDefault())
                     Text(
-                        text = dateFormat.format(java.util.Date(customer.lastTransactionAt)),
+                        text = dateFormat.format(Date(customer.lastTransactionAt)),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
@@ -303,12 +339,20 @@ private fun CustomerCard(
                         color = OrangeDue
                     )
                 } else {
-                    Text(
-                        text = "পরিশোধ",
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = GreenProfit
-                    )
+                    Card(
+                        shape = RoundedCornerShape(8.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = GreenProfit.copy(alpha = 0.1f)
+                        )
+                    ) {
+                        Text(
+                            text = "Paid",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = GreenProfit,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                        )
+                    }
                 }
             }
         }

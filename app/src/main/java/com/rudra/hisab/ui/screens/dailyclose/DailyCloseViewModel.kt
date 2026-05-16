@@ -40,7 +40,8 @@ data class DailyCloseState(
     val pastSnapshots: List<DailySnapshotEntity> = emptyList(),
     val selectedDate: LocalDate = LocalDate.now(),
     val showCalendar: Boolean = false,
-    val selectedSnapshot: DailySnapshotEntity? = null
+    val selectedSnapshot: DailySnapshotEntity? = null,
+    val isBangla: Boolean = true
 )
 
 @HiltViewModel

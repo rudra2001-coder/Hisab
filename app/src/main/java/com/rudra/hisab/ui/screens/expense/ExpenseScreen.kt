@@ -10,17 +10,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,18 +28,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Snackbar
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -51,7 +44,6 @@ import com.rudra.hisab.data.local.entity.ExpenseEntity
 import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.CurrencyFormatter
-import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,19 +54,26 @@ fun ExpenseScreen(
     viewModel: ExpenseViewModel
 ) {
     val state by viewModel.state.collectAsState()
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        Text(
-            text = "খরচ",
-            style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Expenses",
+                style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold
+            )
+            IconButton(onClick = { viewModel.showAddDialog() }) {
+                Icon(Icons.Default.Add, contentDescription = "Add Expense", tint = RedExpense)
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -89,10 +88,10 @@ fun ExpenseScreen(
                     label = {
                         Text(
                             when (filter) {
-                                ExpenseFilter.ALL -> "সব"
-                                ExpenseFilter.TODAY -> "আজ"
-                                ExpenseFilter.WEEK -> "এই সপ্তাহ"
-                                ExpenseFilter.MONTH -> "এই মাস"
+                                ExpenseFilter.ALL -> "All"
+                                ExpenseFilter.TODAY -> "Today"
+                                ExpenseFilter.WEEK -> "Week"
+                                ExpenseFilter.MONTH -> "Month"
                             }
                         )
                     },
@@ -106,7 +105,7 @@ fun ExpenseScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "মোট: ${CurrencyFormatter.format(state.totalForPeriod)}",
+            text = "Total: ${CurrencyFormatter.format(state.totalForPeriod)}",
             style = MaterialTheme.typography.titleLarge,
             color = RedExpense,
             fontWeight = FontWeight.Bold
@@ -116,7 +115,7 @@ fun ExpenseScreen(
 
         if (state.expenses.isEmpty()) {
             Text(
-                text = "কোনো খরচ নেই",
+                text = "No expenses",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -125,7 +124,7 @@ fun ExpenseScreen(
                 state.groupedExpenses.forEach { (date, expenses) ->
                     item {
                         Text(
-                            text = "$date — মোট: ${CurrencyFormatter.format(expenses.sumOf { it.amount })}",
+                            text = "$date — Total: ${CurrencyFormatter.format(expenses.sumOf { it.amount })}",
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -142,13 +141,6 @@ fun ExpenseScreen(
                 item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
-
-        IconButton(
-            onClick = { viewModel.showAddDialog() },
-            modifier = Modifier.align(Alignment.End)
-        ) {
-            Icon(Icons.Default.Add, contentDescription = "Add Expense", tint = RedExpense)
-        }
     }
 
     if (state.showUndoSnackbar) {
@@ -156,25 +148,22 @@ fun ExpenseScreen(
             modifier = Modifier.padding(16.dp),
             containerColor = MaterialTheme.colorScheme.inverseSurface,
             action = {
-                TextButton(onClick = {
-                    viewModel.undoDelete()
-                    scope.launch { snackbarHostState.showSnackbar("খরচ পুনরুদ্ধার করা হয়েছে") }
-                }) {
-                    Text("পূর্বাবস্থায় ফিরান", color = GreenProfit)
+                TextButton(onClick = { viewModel.undoDelete() }) {
+                    Text("Undo", color = GreenProfit)
                 }
             }
         ) {
-            Text("খরচ মুছে ফেলা হয়েছে")
+            Text("Expense deleted")
         }
     }
 
     if (state.showAddDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.hideAddDialog() },
-            title = { Text("খরচ যোগ") },
+            title = { Text("Add Expense") },
             text = {
                 Column {
-                    Text("বিভাগ", style = MaterialTheme.typography.titleMedium)
+                    Text("Category", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         ExpenseCategory.entries.forEach { cat ->
@@ -184,12 +173,12 @@ fun ExpenseScreen(
                                 label = {
                                     Text(
                                         when (cat) {
-                                            ExpenseCategory.TRANSPORT -> "পরিবহন"
-                                            ExpenseCategory.LABOR -> "শ্রমিক"
-                                            ExpenseCategory.RENT -> "ভাড়া"
-                                            ExpenseCategory.UTILITY -> "বিদ্যুৎ"
-                                            ExpenseCategory.PURCHASE -> "ক্রয়"
-                                            ExpenseCategory.OTHER -> "অন্যান্য"
+                                            ExpenseCategory.TRANSPORT -> "Transport"
+                                            ExpenseCategory.LABOR -> "Labor"
+                                            ExpenseCategory.RENT -> "Rent"
+                                            ExpenseCategory.UTILITY -> "Utility"
+                                            ExpenseCategory.PURCHASE -> "Purchase"
+                                            ExpenseCategory.OTHER -> "Other"
                                         }
                                     )
                                 },
@@ -203,18 +192,20 @@ fun ExpenseScreen(
                     OutlinedTextField(
                         value = state.amount,
                         onValueChange = viewModel::setAmount,
-                        label = { Text("পরিমাণ") },
+                        label = { Text("Amount") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = state.description,
                         onValueChange = viewModel::setDescription,
-                        label = { Text("বিবরণ (ঐচ্ছিক)") },
+                        label = { Text("Description (optional)") },
                         modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
+                        singleLine = true,
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
                     )
                 }
             },
@@ -222,10 +213,10 @@ fun ExpenseScreen(
                 Button(
                     onClick = { viewModel.addExpense() },
                     enabled = state.amount.toDoubleOrNull() ?: 0.0 > 0 && !state.isSaving
-                ) { Text(if (state.isSaving) "..." else "সংরক্ষণ") }
+                ) { Text(if (state.isSaving) "..." else "Save") }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.hideAddDialog() }) { Text("বাতিল") }
+                TextButton(onClick = { viewModel.hideAddDialog() }) { Text("Cancel") }
             }
         )
     }
@@ -238,7 +229,10 @@ private fun ExpenseCard(
 ) {
     val dateFormat = SimpleDateFormat("dd/MM/yy hh:mm a", Locale.getDefault())
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(1.dp, androidx.compose.foundation.shape.RoundedCornerShape(12.dp)),
+        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = RedExpense.copy(alpha = 0.05f)
         )
@@ -253,12 +247,12 @@ private fun ExpenseCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = when (expense.categoryId) {
-                        ExpenseCategory.TRANSPORT -> "পরিবহন"
-                        ExpenseCategory.LABOR -> "শ্রমিক"
-                        ExpenseCategory.RENT -> "ভাড়া"
-                        ExpenseCategory.UTILITY -> "বিদ্যুৎ"
-                        ExpenseCategory.PURCHASE -> "ক্রয়"
-                        ExpenseCategory.OTHER -> "অন্যান্য"
+                        ExpenseCategory.TRANSPORT -> "Transport"
+                        ExpenseCategory.LABOR -> "Labor"
+                        ExpenseCategory.RENT -> "Rent"
+                        ExpenseCategory.UTILITY -> "Utility"
+                        ExpenseCategory.PURCHASE -> "Purchase"
+                        ExpenseCategory.OTHER -> "Other"
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold

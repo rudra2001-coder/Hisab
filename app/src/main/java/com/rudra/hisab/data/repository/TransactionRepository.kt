@@ -56,6 +56,12 @@ class TransactionRepository @Inject constructor(
     suspend fun getTodayCreditGiven(startOfDay: Long, endOfDay: Long): Double =
         transactionDao.getTodayCreditGiven(startOfDay, endOfDay)
 
+    suspend fun getTotalDueInRange(startOfDay: Long, endOfDay: Long): Double =
+        transactionDao.getTotalDueInRange(startOfDay, endOfDay)
+
+    suspend fun getTotalSalesPaidInRange(startOfDay: Long, endOfDay: Long): Double =
+        transactionDao.getTotalSalesPaidInRange(startOfDay, endOfDay)
+
     fun getTodayCreditFlow(startOfDay: Long, endOfDay: Long): Flow<Double> =
         transactionDao.getTodayCreditFlow(startOfDay, endOfDay)
 

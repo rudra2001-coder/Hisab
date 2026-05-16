@@ -8,6 +8,7 @@ import com.rudra.hisab.data.local.entity.SalePaymentType
 import com.rudra.hisab.data.local.entity.ProductEntity
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
+import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.CustomerRepository
 import com.rudra.hisab.data.repository.ProductRepository
 import com.rudra.hisab.data.repository.TransactionRepository
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -32,7 +34,8 @@ data class SaleState(
     val saleComplete: Boolean = false,
     val searchQuery: String = "",
     val todaySalesTotal: Double = 0.0,
-    val todaySaleCount: Int = 0
+    val todaySaleCount: Int = 0,
+    val isBangla: Boolean = true
 )
 
 @HiltViewModel
@@ -40,13 +43,15 @@ class SaleViewModel @Inject constructor(
     private val productRepository: ProductRepository,
     private val customerRepository: CustomerRepository,
     private val transactionRepository: TransactionRepository,
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(SaleState())
     val state: StateFlow<SaleState> = _state.asStateFlow()
 
     init {
+        loadSettings()
         viewModelScope.launch {
             val now = java.time.LocalDate.now()
             val startOfDay = now.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
@@ -67,6 +72,13 @@ class SaleViewModel @Inject constructor(
                     todaySaleCount = saleCount
                 )
             }
+        }
+    }
+
+    private fun loadSettings() {
+        viewModelScope.launch {
+            val settings = appPreferences.settings.first()
+            _state.value = _state.value.copy(isBangla = settings.isBangla)
         }
     }
 

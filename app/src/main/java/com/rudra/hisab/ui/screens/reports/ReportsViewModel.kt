@@ -3,11 +3,12 @@ package com.rudra.hisab.ui.screens.reports
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rudra.hisab.data.local.entity.ExpenseCategory
+import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.CustomerRepository
 import com.rudra.hisab.data.repository.DailySnapshotRepository
 import com.rudra.hisab.data.repository.ExpenseRepository
 import com.rudra.hisab.data.repository.ProductRepository
-import com.rudra.hisab.data.repository.SaleRepository
+import com.rudra.hisab.data.repository.TransactionRepository
 import com.rudra.hisab.util.ExportFormat
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,16 +50,18 @@ data class ReportsUiState(
     val totalStockValue: Double = 0.0,
     val isLoading: Boolean = false,
     val selectedFormat: ExportFormat = ExportFormat.CSV,
-    val isExporting: Boolean = false
+    val isExporting: Boolean = false,
+    val isBangla: Boolean = true
 )
 
 @HiltViewModel
 class ReportsViewModel @Inject constructor(
-    private val saleRepository: SaleRepository,
+    private val transactionRepository: TransactionRepository,
     private val expenseRepository: ExpenseRepository,
     private val customerRepository: CustomerRepository,
     private val productRepository: ProductRepository,
-    private val dailySnapshotRepository: DailySnapshotRepository
+    private val dailySnapshotRepository: DailySnapshotRepository,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportsUiState())
@@ -66,6 +69,14 @@ class ReportsViewModel @Inject constructor(
 
     init {
         loadReports()
+        loadSettings()
+    }
+
+    private fun loadSettings() {
+        viewModelScope.launch {
+            val settings = appPreferences.settings.first()
+            _uiState.value = _uiState.value.copy(isBangla = settings.isBangla)
+        }
     }
 
     fun setDateRange(startDate: Long, endDate: Long) {
@@ -79,10 +90,10 @@ class ReportsViewModel @Inject constructor(
         _uiState.value = _uiState.value.copy(isLoading = true)
 
         viewModelScope.launch {
-            // Sales — suspend snapshot
-            val totalSales = saleRepository.getTotalSalesInRange(start, end)
-            val saleCount = saleRepository.getSaleCountInRange(start, end)
-            val totalDues = saleRepository.getTotalOutstandingDues()
+            // Sales — suspend snapshot from transactions table
+            val totalSales = transactionRepository.getTodaySalesTotal(start, end)
+            val saleCount = transactionRepository.getTodaySaleCount(start, end)
+            val totalDueInRange = transactionRepository.getTotalDueInRange(start, end)
 
             // Expenses — collect once
             val expenseList = expenseRepository.getExpensesByDateRange(start, end)
@@ -106,8 +117,8 @@ class ReportsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(
                 salesReport = SalesReportData(
                     totalSales = totalSales,
-                    totalPaid = totalSales - totalDues,
-                    totalDue = totalDues,
+                    totalPaid = totalSales - totalDueInRange,
+                    totalDue = totalDueInRange,
                     saleCount = saleCount,
                     avgSaleValue = if (saleCount > 0) totalSales / saleCount else 0.0
                 ),
