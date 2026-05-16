@@ -28,6 +28,7 @@ import androidx.core.os.LocaleListCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -106,7 +107,7 @@ class MainActivity : FragmentActivity() {
                 }
             }
 
-            val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+            val lifecycleOwner = LocalLifecycleOwner.current
             LaunchedEffect(Unit) {
                 val observer = LifecycleEventObserver { _, event ->
                     when (event) {
@@ -355,30 +356,39 @@ class MainActivity : FragmentActivity() {
 
                                 composable(Routes.MORE) {
                                     MoreScreen(
+                                        isBangla = appLanguage == AppLanguage.BANGLA,
                                         onNavigateToDashboard = {
                                             navController.navigate(Routes.DASHBOARD) {
-                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
                                                 launchSingleTop = true
                                                 restoreState = true
                                             }
                                         },
                                         onNavigateToInventory = {
                                             navController.navigate(Routes.INVENTORY) {
-                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
                                                 launchSingleTop = true
                                                 restoreState = true
                                             }
                                         },
                                         onNavigateToSale = {
                                             navController.navigate(Routes.SALE) {
-                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
                                                 launchSingleTop = true
                                                 restoreState = true
                                             }
                                         },
                                         onNavigateToCustomers = {
                                             navController.navigate(Routes.CUSTOMERS) {
-                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
                                                 launchSingleTop = true
                                                 restoreState = true
                                             }
@@ -403,7 +413,8 @@ class MainActivity : FragmentActivity() {
                                         },
                                         onNavigateToExport = {
                                             navController.navigate(Routes.EXPORT)
-                                        }
+                                        },
+
                                     )
                                 }
                             }
