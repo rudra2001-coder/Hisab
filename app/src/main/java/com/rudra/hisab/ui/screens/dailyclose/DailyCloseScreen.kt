@@ -24,7 +24,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.rudra.hisab.data.local.entity.DailySnapshotEntity
@@ -66,8 +66,7 @@ fun DailyCloseScreen(
         } else if (state.isClosed) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = GreenProfit.copy(alpha = 0.1f))
             ) {
@@ -90,8 +89,7 @@ fun DailyCloseScreen(
         } else if (state.alreadyClosed) {
             Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(2.dp, RoundedCornerShape(16.dp)),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = OrangeDue.copy(alpha = 0.1f))
             ) {
@@ -148,8 +146,7 @@ fun DailyCloseScreen(
 
             Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                    .fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (state.netProfit >= 0) GreenProfit.copy(alpha = 0.1f)
@@ -222,8 +219,7 @@ fun DailyCloseScreen(
 private fun SummaryRow(label: String, amount: Double, color: androidx.compose.ui.graphics.Color) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, RoundedCornerShape(12.dp)),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
@@ -255,8 +251,7 @@ private fun PastSnapshotRow(
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, RoundedCornerShape(12.dp)),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {

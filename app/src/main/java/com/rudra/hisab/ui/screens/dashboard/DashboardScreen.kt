@@ -65,7 +65,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
@@ -411,10 +410,9 @@ private fun MetricCard(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier.shadow(3.dp, RoundedCornerShape(14.dp)),
+        modifier = modifier,
         shape = RoundedCornerShape(14.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Row(
             modifier = Modifier
@@ -436,8 +434,7 @@ private fun MetricCard(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(36.dp)
-                        .shadow(4.dp, CircleShape),
+                        .size(36.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Card(
@@ -517,18 +514,15 @@ private fun StockOverviewCard(
     Card(
         onClick = onClick,
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(3.dp, RoundedCornerShape(16.dp)),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(
                     modifier = Modifier
-                        .size(40.dp)
-                        .shadow(4.dp, CircleShape),
+                        .size(40.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Card(
@@ -979,8 +973,7 @@ private fun LowStockAlertCard(
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = OrangeDue.copy(alpha = 0.08f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        )
     ) {
         Row(
             modifier = Modifier
@@ -990,8 +983,7 @@ private fun LowStockAlertCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
-                    .shadow(4.dp, RoundedCornerShape(12.dp)),
+                    .size(44.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Card(
@@ -1049,13 +1041,11 @@ private fun ModernActionButton(
     Card(
         onClick = onClick,
         modifier = modifier
-            .height(88.dp)
-            .shadow(3.dp, RoundedCornerShape(16.dp)),
+            .height(88.dp),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        )
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -1064,8 +1054,7 @@ private fun ModernActionButton(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .shadow(4.dp, RoundedCornerShape(10.dp)),
+                    .size(40.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Card(

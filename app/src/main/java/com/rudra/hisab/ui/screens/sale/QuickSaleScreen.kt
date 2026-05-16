@@ -384,8 +384,7 @@ private fun SaleTabContent(
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(16.dp)),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -466,12 +465,10 @@ private fun SaleTabContent(
         onClick = onConfirm,
         modifier = Modifier
             .fillMaxWidth()
-            .height(58.dp)
-            .shadow(4.dp, RoundedCornerShape(16.dp)),
+            .height(58.dp),
         enabled = !state.isSaving && state.quantityDouble > 0,
         colors = ButtonDefaults.buttonColors(containerColor = GreenProfit),
-        shape = RoundedCornerShape(16.dp),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         if (state.isSaving) {
             CircularProgressIndicator(
@@ -521,12 +518,10 @@ private fun ProductTile(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(140.dp)
-            .shadow(3.dp, RoundedCornerShape(16.dp)),
+            .height(140.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         enabled = !outOfStock,
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+        shape = RoundedCornerShape(16.dp)
     ) {
         Column(
             modifier = Modifier
@@ -583,8 +578,7 @@ private fun CartProductTile(
         onClick = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .height(120.dp)
-            .shadow(2.dp, RoundedCornerShape(16.dp)),
+            .height(120.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
         enabled = !outOfStock,
         shape = RoundedCornerShape(16.dp)
@@ -622,8 +616,7 @@ private fun HistoryTabContent(
                 val pName = productMap[t.productId]?.nameBangla ?: "Product"
                 Card(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .shadow(1.dp, RoundedCornerShape(12.dp)),
+                        .fillMaxWidth(),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)),
                     shape = RoundedCornerShape(12.dp)
                 ) {
@@ -681,8 +674,7 @@ private fun CartBottomSheetContent(
         Spacer(Modifier.height(16.dp))
         Card(
             modifier = Modifier
-                .fillMaxWidth()
-                .shadow(2.dp, RoundedCornerShape(16.dp)),
+                .fillMaxWidth(),
             colors = CardDefaults.cardColors(containerColor = GreenProfit.copy(alpha = 0.1f)),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -710,8 +702,7 @@ private fun CartBottomSheetContent(
             onClick = onConfirm,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
-                .shadow(4.dp, RoundedCornerShape(16.dp)),
+                .height(56.dp),
             colors = ButtonDefaults.buttonColors(containerColor = GreenProfit),
             shape = RoundedCornerShape(16.dp)
         ) {
@@ -729,8 +720,7 @@ private fun CartItemRow(
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, RoundedCornerShape(12.dp)),
+            .fillMaxWidth(),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
@@ -762,8 +752,7 @@ private fun InteractiveQuantityCard(
 ) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(20.dp)),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
         shape = RoundedCornerShape(20.dp)
     ) {
@@ -909,8 +898,7 @@ private fun CustomerSelector(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .shadow(1.dp, RoundedCornerShape(12.dp)),
+                    .padding(vertical = 4.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
                 ),

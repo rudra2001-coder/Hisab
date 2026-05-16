@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,7 +36,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
+
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -54,6 +55,7 @@ fun ExpenseScreen(
     viewModel: ExpenseViewModel
 ) {
     val state by viewModel.state.collectAsState()
+    val isBangla = state.isBangla
 
     Column(
         modifier = Modifier
@@ -66,12 +68,12 @@ fun ExpenseScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Expenses",
+                text = if (isBangla) "খরচ" else "Expenses",
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = { viewModel.showAddDialog() }) {
-                Icon(Icons.Default.Add, contentDescription = "Add Expense", tint = RedExpense)
+                Icon(Icons.Default.Add, contentDescription = if (isBangla) "খরচ যোগ" else "Add Expense", tint = RedExpense)
             }
         }
 
@@ -88,10 +90,10 @@ fun ExpenseScreen(
                     label = {
                         Text(
                             when (filter) {
-                                ExpenseFilter.ALL -> "All"
-                                ExpenseFilter.TODAY -> "Today"
-                                ExpenseFilter.WEEK -> "Week"
-                                ExpenseFilter.MONTH -> "Month"
+                                ExpenseFilter.ALL -> if (isBangla) "সব" else "All"
+                                ExpenseFilter.TODAY -> if (isBangla) "আজ" else "Today"
+                                ExpenseFilter.WEEK -> if (isBangla) "সপ্তাহ" else "Week"
+                                ExpenseFilter.MONTH -> if (isBangla) "মাস" else "Month"
                             }
                         )
                     },
@@ -105,7 +107,7 @@ fun ExpenseScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "Total: ${CurrencyFormatter.format(state.totalForPeriod)}",
+            text = "${if (isBangla) "মোট" else "Total"}: ${CurrencyFormatter.format(state.totalForPeriod)}",
             style = MaterialTheme.typography.titleLarge,
             color = RedExpense,
             fontWeight = FontWeight.Bold
@@ -115,7 +117,7 @@ fun ExpenseScreen(
 
         if (state.expenses.isEmpty()) {
             Text(
-                text = "No expenses",
+                text = if (isBangla) "কোনো খরচ নেই" else "No expenses",
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -149,21 +151,24 @@ fun ExpenseScreen(
             containerColor = MaterialTheme.colorScheme.inverseSurface,
             action = {
                 TextButton(onClick = { viewModel.undoDelete() }) {
-                    Text("Undo", color = GreenProfit)
+                    Text(if (isBangla) "পূর্বাবস্থায় আনুন" else "Undo", color = GreenProfit)
                 }
             }
         ) {
-            Text("Expense deleted")
+            Text(if (isBangla) "খরচ মুছে ফেলা হয়েছে" else "Expense deleted")
         }
     }
 
     if (state.showAddDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.hideAddDialog() },
-            title = { Text("Add Expense") },
+            title = { Text(if (isBangla) "খরচ যোগ" else "Add Expense") },
             text = {
                 Column {
-                    Text("Category", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (isBangla) "ক্যাটাগরি" else "Category",
+                        style = MaterialTheme.typography.titleMedium
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         ExpenseCategory.entries.forEach { cat ->
@@ -173,12 +178,12 @@ fun ExpenseScreen(
                                 label = {
                                     Text(
                                         when (cat) {
-                                            ExpenseCategory.TRANSPORT -> "Transport"
-                                            ExpenseCategory.LABOR -> "Labor"
-                                            ExpenseCategory.RENT -> "Rent"
-                                            ExpenseCategory.UTILITY -> "Utility"
-                                            ExpenseCategory.PURCHASE -> "Purchase"
-                                            ExpenseCategory.OTHER -> "Other"
+                                            ExpenseCategory.TRANSPORT -> if (isBangla) "পরিবহন" else "Transport"
+                                            ExpenseCategory.LABOR -> if (isBangla) "শ্রম" else "Labor"
+                                            ExpenseCategory.RENT -> if (isBangla) "ভাড়া" else "Rent"
+                                            ExpenseCategory.UTILITY -> if (isBangla) "ইউটিলিটি" else "Utility"
+                                            ExpenseCategory.PURCHASE -> if (isBangla) "ক্রয়" else "Purchase"
+                                            ExpenseCategory.OTHER -> if (isBangla) "অন্যান্য" else "Other"
                                         }
                                     )
                                 },
@@ -192,20 +197,20 @@ fun ExpenseScreen(
                     OutlinedTextField(
                         value = state.amount,
                         onValueChange = viewModel::setAmount,
-                        label = { Text("Amount") },
+                        label = { Text(if (isBangla) "পরিমাণ" else "Amount") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = state.description,
                         onValueChange = viewModel::setDescription,
-                        label = { Text("Description (optional)") },
+                        label = { Text(if (isBangla) "বিবরণ (ঐচ্ছিক)" else "Description (optional)") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
-                        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp)
                     )
                 }
             },
@@ -213,10 +218,20 @@ fun ExpenseScreen(
                 Button(
                     onClick = { viewModel.addExpense() },
                     enabled = state.amount.toDoubleOrNull() ?: 0.0 > 0 && !state.isSaving
-                ) { Text(if (state.isSaving) "..." else "Save") }
+                ) {
+                    Text(
+                        if (state.isSaving) {
+                            if (isBangla) "সংরক্ষণ..." else "..."
+                        } else {
+                            if (isBangla) "সংরক্ষণ" else "Save"
+                        }
+                    )
+                }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.hideAddDialog() }) { Text("Cancel") }
+                TextButton(onClick = { viewModel.hideAddDialog() }) {
+                    Text(if (isBangla) "বাতিল" else "Cancel")
+                }
             }
         )
     }
@@ -230,9 +245,8 @@ private fun ExpenseCard(
     val dateFormat = SimpleDateFormat("dd/MM/yy hh:mm a", Locale.getDefault())
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, androidx.compose.foundation.shape.RoundedCornerShape(12.dp)),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = RedExpense.copy(alpha = 0.05f)
         )
@@ -247,12 +261,12 @@ private fun ExpenseCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = when (expense.categoryId) {
-                        ExpenseCategory.TRANSPORT -> "Transport"
-                        ExpenseCategory.LABOR -> "Labor"
-                        ExpenseCategory.RENT -> "Rent"
-                        ExpenseCategory.UTILITY -> "Utility"
-                        ExpenseCategory.PURCHASE -> "Purchase"
-                        ExpenseCategory.OTHER -> "Other"
+                        ExpenseCategory.TRANSPORT -> "পরিবহন"
+                        ExpenseCategory.LABOR -> "শ্রম"
+                        ExpenseCategory.RENT -> "ভাড়া"
+                        ExpenseCategory.UTILITY -> "ইউটিলিটি"
+                        ExpenseCategory.PURCHASE -> "ক্রয়"
+                        ExpenseCategory.OTHER -> "অন্যান্য"
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold
@@ -277,7 +291,7 @@ private fun ExpenseCard(
                 color = RedExpense
             )
             IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = "Delete", tint = RedExpense)
+                Icon(Icons.Default.Delete, contentDescription = "মুছুন", tint = RedExpense)
             }
         }
     }

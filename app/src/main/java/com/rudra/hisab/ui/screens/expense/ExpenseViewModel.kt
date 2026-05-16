@@ -8,6 +8,7 @@ import com.rudra.hisab.data.local.entity.ExpenseCategory
 import com.rudra.hisab.data.local.entity.ExpenseEntity
 import com.rudra.hisab.data.local.entity.TransactionEntity
 import com.rudra.hisab.data.local.entity.TransactionType
+import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.repository.ExpenseRepository
 import com.rudra.hisab.data.repository.TransactionRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -41,14 +42,16 @@ data class ExpenseState(
     val deletedExpense: ExpenseEntity? = null,
     val showUndoSnackbar: Boolean = false,
     val receiptImageUri: String = "",
-    val showDeleteConfirm: ExpenseEntity? = null
+    val showDeleteConfirm: ExpenseEntity? = null,
+    val isBangla: Boolean = true
 )
 
 @HiltViewModel
 class ExpenseViewModel @Inject constructor(
     private val expenseRepository: ExpenseRepository,
     private val transactionRepository: TransactionRepository,
-    private val database: HisabDatabase
+    private val database: HisabDatabase,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(ExpenseState())
@@ -56,6 +59,11 @@ class ExpenseViewModel @Inject constructor(
     private var loadJob: Job? = null
 
     init {
+        viewModelScope.launch {
+            appPreferences.settings.collect { settings ->
+                _state.value = _state.value.copy(isBangla = settings.isBangla)
+            }
+        }
         setFilter(ExpenseFilter.TODAY)
     }
 
