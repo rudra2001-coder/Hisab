@@ -5,9 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.data.preferences.AppSettings
 import com.rudra.hisab.util.BackupManager
@@ -19,10 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.security.MessageDigest
-import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
 data class SettingsState(
@@ -77,15 +71,11 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun setLanguage(code: String) {
-        viewModelScope.launch {
-            appPreferences.setLanguageCode(code)
-        }
-    }
-
     fun toggleLanguage() {
-        val newCode = if (_state.value.settings.languageCode == "bn") "en" else "bn"
-        setLanguage(newCode)
+        viewModelScope.launch {
+            val current = _state.value.settings.languageCode
+            appPreferences.setLanguageCode(if (current == "bn") "en" else "bn")
+        }
     }
 
     fun showPinSetup() { showPinDialog(PinMode.SETUP) }
@@ -120,7 +110,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     fun nextPinStep() {
-        _state.value = _state.value.copy(pinStep = _state.value.pinStep + 1, pinInput = "", pinError = null)
+        _state.value = _state.value.copy(pinStep = _state.value.pinStep + 1, pinError = null)
     }
 
     private fun hashPin(pin: String): String {
@@ -230,6 +220,19 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch { appPreferences.setBatchTrackingEnabled(!_state.value.settings.batchTrackingEnabled) }
     }
 
+    // Sale Reminder
+    fun toggleSaleReminder() {
+        viewModelScope.launch {
+            val enabled = !_state.value.settings.saleReminderEnabled
+            appPreferences.setSaleReminderEnabled(enabled)
+            if (enabled) {
+                ReminderWorker.schedule(context)
+            } else {
+                ReminderWorker.cancel(context)
+            }
+        }
+    }
+
     // Monthly Report
     fun toggleMonthlyReport() {
         viewModelScope.launch {
@@ -237,6 +240,8 @@ class SettingsViewModel @Inject constructor(
             appPreferences.setMonthlyReportReminder(enabled)
             if (enabled) {
                 MonthlyReportWorker.schedule(context)
+            } else {
+                MonthlyReportWorker.cancel(context)
             }
         }
     }
@@ -370,43 +375,20 @@ class SettingsViewModel @Inject constructor(
 
     fun exportData(context: Context) {
         viewModelScope.launch {
-            val uri = if (_state.value.exportFormat == "csv") {
-                exportAsCsv(context)
+            val file = if (_state.value.exportFormat == "csv") {
+                java.io.File(context.cacheDir, "hisab_export.csv").apply { writeText("Export CSV Content") }
             } else {
-                exportAsJson(context)
+                java.io.File(context.cacheDir, "hisab_export.json").apply { writeText("{\"version\":1}") }
             }
-            if (uri != null) {
-                val shareIntent = Intent(Intent.ACTION_SEND).apply {
-                    type = if (_state.value.exportFormat == "csv") "text/csv" else "application/json"
-                    putExtra(Intent.EXTRA_STREAM, uri)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                context.startActivity(Intent.createChooser(shareIntent, "ডেটা এক্সপোর্ট"))
+            val uri = androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = if (_state.value.exportFormat == "csv") "text/csv" else "application/json"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
+            context.startActivity(Intent.createChooser(shareIntent, "ডেটা এক্সপোর্ট"))
             _state.value = _state.value.copy(showDataExportDialog = false)
         }
-    }
-
-    private fun exportAsJson(context: Context): Uri? {
-        return try {
-            val file = java.io.File(context.cacheDir, "hisab_export.json")
-            val json = buildString {
-                append("{")
-                append("\"version\":1,")
-                append("\"exportDate\":\"${java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())}\"")
-                append("}")
-            }
-            file.writeText(json)
-            androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-        } catch (e: Exception) { null }
-    }
-
-    private fun exportAsCsv(context: Context): Uri? {
-        return try {
-            val file = java.io.File(context.cacheDir, "hisab_export.csv")
-            file.writeText("Export,Date,Version\n1,${java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.US).format(java.util.Date())},1")
-            androidx.core.content.FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
-        } catch (e: Exception) { null }
     }
 
     // Data Import

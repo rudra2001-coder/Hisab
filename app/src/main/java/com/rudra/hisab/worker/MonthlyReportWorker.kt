@@ -92,6 +92,10 @@ class MonthlyReportWorker(
             )
         }
 
+        fun cancel(context: Context) {
+            WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
+        }
+
         private fun calculateInitialDelay(): Long {
             val now = LocalTime.now()
             val targetTime = LocalTime.of(10, 0)

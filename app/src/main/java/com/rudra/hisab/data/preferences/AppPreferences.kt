@@ -31,6 +31,7 @@ data class AppSettings(
     val deleteWindowHours: Int = 24,
     val saleReminderHour: Int = 20,
     val saleReminderMinute: Int = 0,
+    val saleReminderEnabled: Boolean = true,
     val monthlyReportReminder: Boolean = false,
     val quickActions: String = "sale,stock,expense,customer",
     val navOrder: String = "dashboard,inventory,sale,customers,more",
@@ -63,6 +64,7 @@ class AppPreferences @Inject constructor(
         val DELETE_WINDOW_HOURS = intPreferencesKey("delete_window_hours")
         val SALE_REMINDER_HOUR = intPreferencesKey("sale_reminder_hour")
         val SALE_REMINDER_MINUTE = intPreferencesKey("sale_reminder_minute")
+        val SALE_REMINDER_ENABLED = booleanPreferencesKey("sale_reminder_enabled")
         val MONTHLY_REPORT_REMINDER = booleanPreferencesKey("monthly_report_reminder")
         val QUICK_ACTIONS = stringPreferencesKey("quick_actions")
         val NAV_ORDER = stringPreferencesKey("nav_order")
@@ -91,6 +93,7 @@ class AppPreferences @Inject constructor(
             deleteWindowHours = prefs[Keys.DELETE_WINDOW_HOURS] ?: 24,
             saleReminderHour = prefs[Keys.SALE_REMINDER_HOUR] ?: 20,
             saleReminderMinute = prefs[Keys.SALE_REMINDER_MINUTE] ?: 0,
+            saleReminderEnabled = prefs[Keys.SALE_REMINDER_ENABLED] ?: true,
             monthlyReportReminder = prefs[Keys.MONTHLY_REPORT_REMINDER] ?: false,
             quickActions = prefs[Keys.QUICK_ACTIONS] ?: "sale,stock,expense,customer",
             navOrder = prefs[Keys.NAV_ORDER] ?: "dashboard,inventory,sale,customers,more",
@@ -160,6 +163,10 @@ class AppPreferences @Inject constructor(
             it[Keys.SALE_REMINDER_HOUR] = hour
             it[Keys.SALE_REMINDER_MINUTE] = minute
         }
+    }
+
+    suspend fun setSaleReminderEnabled(enabled: Boolean) {
+        context.dataStore.edit { it[Keys.SALE_REMINDER_ENABLED] = enabled }
     }
 
     suspend fun setMonthlyReportReminder(enabled: Boolean) {
