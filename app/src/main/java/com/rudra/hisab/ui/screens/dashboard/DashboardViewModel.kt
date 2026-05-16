@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.LocalTime
@@ -34,24 +33,46 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import javax.inject.Inject
 
+// ─── Period selector ──────────────────────────────────────────────────────────
+
+enum class DashboardPeriod { TODAY, MONTH }
+
+// ─── State ───────────────────────────────────────────────────────────────────
+
 data class DashboardState(
     val shopName: String = "",
+    val dateLabel: String = "",
+    val languageCode: String = "bn",
+
+    // ── Today ────────────────────────────────────────────────────────────────
     val todaySales: Double = 0.0,
     val todayExpenses: Double = 0.0,
     val totalDues: Double = 0.0,
-    val lowStockCount: Int = 0,
-    val lowStockProducts: List<ProductEntity> = emptyList(),
     val todaySaleCount: Int = 0,
     val todayPurchases: Double = 0.0,
     val todayCreditGiven: Double = 0.0,
+
+    // ── Month ────────────────────────────────────────────────────────────────
+    val monthSales: Double = 0.0,
+    val monthExpenses: Double = 0.0,
+    val monthSaleCount: Int = 0,
+    val monthPurchases: Double = 0.0,
+    val monthCreditGiven: Double = 0.0,
+
+    // ── Inventory ────────────────────────────────────────────────────────────
+    val lowStockCount: Int = 0,
+    val lowStockProducts: List<ProductEntity> = emptyList(),
     val totalProductCount: Int = 0,
     val totalCustomerCount: Int = 0,
     val totalStockValue: Double = 0.0,
+
+    // ── UI control ───────────────────────────────────────────────────────────
     val quickActions: List<String> = listOf("sale", "stock", "expense", "customer"),
     val isLoading: Boolean = true,
-    val dateLabel: String = "",
-    val languageCode: String = "bn",
+    val selectedPeriod: DashboardPeriod = DashboardPeriod.TODAY,
     val showFabMenu: Boolean = false,
+
+    // ── Quick dialogs ────────────────────────────────────────────────────────
     val showQuickSaleDialog: Boolean = false,
     val showQuickExpenseDialog: Boolean = false,
     val showQuickStockDialog: Boolean = false,
@@ -69,10 +90,21 @@ data class DashboardState(
     val allProducts: List<ProductEntity> = emptyList(),
     val allCustomers: List<CustomerEntity> = emptyList(),
     val quickIsSaving: Boolean = false,
-    val quickSaleComplete: Boolean = false
+    val quickSaleComplete: Boolean = false,
 ) {
-    val netProfit: Double get() = todaySales - todayExpenses
+    val netProfit: Double      get() = todaySales - todayExpenses
+    val monthNetProfit: Double get() = monthSales - monthExpenses
+
+    /** Fraction (0–1) of today's sales relative to the monthly total. */
+    val dailySalesFraction: Float
+        get() = if (monthSales > 0) (todaySales / monthSales).toFloat().coerceIn(0f, 1f) else 0f
+
+    /** Fraction (0–1) of today's expenses relative to the monthly total. */
+    val dailyExpenseFraction: Float
+        get() = if (monthExpenses > 0) (todayExpenses / monthExpenses).toFloat().coerceIn(0f, 1f) else 0f
 }
+
+// ─── ViewModel ───────────────────────────────────────────────────────────────
 
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
@@ -82,7 +114,7 @@ class DashboardViewModel @Inject constructor(
     private val customerRepository: CustomerRepository,
     private val productRepository: ProductRepository,
     private val paymentRepository: PaymentRepository,
-    private val database: HisabDatabase
+    private val database: HisabDatabase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -93,64 +125,86 @@ class DashboardViewModel @Inject constructor(
         loadProductsAndCustomers()
     }
 
+    // ── Dashboard data ────────────────────────────────────────────────────────
+
     private fun loadDashboard() {
-        val now = LocalDate.now()
-        val startOfDay = now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val endOfDay = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
+        val now         = LocalDate.now()
+        val zone        = ZoneId.systemDefault()
 
-         viewModelScope.launch {
-             appPreferences.settings.collect { settings ->
-                 val isBn = settings.languageCode == "bn"
-                 val formatter = DateTimeFormatter.ofPattern(
-                     if (isBn) "EEEE, dd MMMM yyyy" else "EEEE, MMMM dd, yyyy",
-                     if (isBn) Locale.forLanguageTag("bn") else Locale.ENGLISH
-                 )
-                 val actions = settings.quickActions.split(",").map { it.trim() }
-                 _state.value = _state.value.copy(
-                     shopName = settings.shopName,
-                     quickActions = actions,
-                     languageCode = settings.languageCode,
-                     dateLabel = now.format(formatter)
-                 )
-             }
-         }
+        // Daily range
+        val dayStart = now.atStartOfDay(zone).toInstant().toEpochMilli()
+        val dayEnd   = now.atTime(LocalTime.MAX).atZone(zone).toInstant().toEpochMilli()
 
+        // Monthly range
+        val monthStart = now.withDayOfMonth(1).atStartOfDay(zone).toInstant().toEpochMilli()
+        val monthEnd   = now.withDayOfMonth(now.lengthOfMonth()).atTime(LocalTime.MAX)
+            .atZone(zone).toInstant().toEpochMilli()
+
+        // Settings (language, shop name, quick-actions)
+        viewModelScope.launch {
+            appPreferences.settings.collect { settings ->
+                val isBn      = settings.languageCode == "bn"
+                val formatter = DateTimeFormatter.ofPattern(
+                    if (isBn) "EEEE, dd MMMM yyyy" else "EEEE, MMMM dd, yyyy",
+                    if (isBn) Locale.forLanguageTag("bn") else Locale.ENGLISH
+                )
+                _state.value = _state.value.copy(
+                    shopName     = settings.shopName,
+                    quickActions = settings.quickActions.split(",").map { it.trim() },
+                    languageCode = settings.languageCode,
+                    dateLabel    = now.format(formatter),
+                )
+            }
+        }
+
+        // Daily aggregates
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
-
             combine(
-                transactionRepository.getTodaySalesFlow(startOfDay, endOfDay),
-                expenseRepository.getTodayExpensesFlow(startOfDay, endOfDay),
+                transactionRepository.getTodaySalesFlow(dayStart, dayEnd),
+                expenseRepository.getTodayExpensesFlow(dayStart, dayEnd),
                 customerRepository.getTotalDues(),
                 productRepository.getLowStockProducts(),
-                transactionRepository.getTodayPurchasesFlow(startOfDay, endOfDay),
-                transactionRepository.getTodayCreditFlow(startOfDay, endOfDay),
+                transactionRepository.getTodayPurchasesFlow(dayStart, dayEnd),
+                transactionRepository.getTodayCreditFlow(dayStart, dayEnd),
                 productRepository.getProductCount(),
-                productRepository.getTotalStockValue()
+                productRepository.getTotalStockValue(),
             ) { args: Array<Any?> ->
-                val sales = args[0] as Double
-                val expenses = args[1] as Double
-                val dues = args[2] as Double?
-                val lowStock = args[3] as List<*>
-                val purchases = args[4] as Double
-                val credit = args[5] as Double
-                val prodCount = args[6] as Int
-                val stockVal = args[7] as Double?
                 _state.value.copy(
-                    todaySales = sales,
-                    todayExpenses = expenses,
-                    totalDues = dues ?: 0.0,
-                    lowStockCount = lowStock.size,
-                    lowStockProducts = lowStock as List<ProductEntity>,
-                    todayPurchases = purchases,
-                    todayCreditGiven = credit,
-                    totalProductCount = prodCount,
-                    totalStockValue = stockVal ?: 0.0,
-                    isLoading = false
+                    todaySales    = args[0] as Double,
+                    todayExpenses = args[1] as Double,
+                    totalDues     = (args[2] as Double?) ?: 0.0,
+                    lowStockCount = (args[3] as List<*>).size,
+                    lowStockProducts = args[3] as List<ProductEntity>,
+                    todayPurchases   = args[4] as Double,
+                    todayCreditGiven = args[5] as Double,
+                    totalProductCount = args[6] as Int,
+                    totalStockValue   = (args[7] as Double?) ?: 0.0,
+                    isLoading         = false,
                 )
             }.collect { newState ->
                 _state.value = newState.copy(
-                    todaySaleCount = transactionRepository.getTodaySaleCount(startOfDay, endOfDay)
+                    todaySaleCount = transactionRepository.getTodaySaleCount(dayStart, dayEnd),
+                )
+            }
+        }
+
+        // Monthly aggregates
+        viewModelScope.launch {
+            combine(
+                transactionRepository.getTodaySalesFlow(monthStart, monthEnd),
+                expenseRepository.getTodayExpensesFlow(monthStart, monthEnd),
+                transactionRepository.getTodayPurchasesFlow(monthStart, monthEnd),
+                transactionRepository.getTodayCreditFlow(monthStart, monthEnd),
+            ) { sales, expenses, purchases, credit ->
+                arrayOf(sales, expenses, purchases, credit)
+            }.collect { arr ->
+                _state.value = _state.value.copy(
+                    monthSales       = arr[0] as Double,
+                    monthExpenses    = arr[1] as Double,
+                    monthPurchases   = arr[2] as Double,
+                    monthCreditGiven = arr[3] as Double,
+                    monthSaleCount   = transactionRepository.getTodaySaleCount(monthStart, monthEnd),
                 )
             }
         }
@@ -164,115 +218,135 @@ class DashboardViewModel @Inject constructor(
         }
         viewModelScope.launch {
             customerRepository.getAllCustomers().collect { customers ->
-                _state.value = _state.value.copy(allCustomers = customers, totalCustomerCount = customers.size)
+                _state.value = _state.value.copy(
+                    allCustomers        = customers,
+                    totalCustomerCount  = customers.size,
+                )
             }
         }
     }
 
-    // --- FAB Menu ---
-    fun toggleFabMenu() { _state.value = _state.value.copy(showFabMenu = !_state.value.showFabMenu) }
-    fun hideFabMenu() { _state.value = _state.value.copy(showFabMenu = false) }
+    // ── Period toggle ─────────────────────────────────────────────────────────
 
-    // --- Quick Sale Dialog ---
+    fun setSelectedPeriod(period: DashboardPeriod) {
+        _state.value = _state.value.copy(selectedPeriod = period)
+    }
+
+    // ── FAB ───────────────────────────────────────────────────────────────────
+
+    fun toggleFabMenu() { _state.value = _state.value.copy(showFabMenu = !_state.value.showFabMenu) }
+    fun hideFabMenu()   { _state.value = _state.value.copy(showFabMenu = false) }
+
+    // ── Quick Sale ────────────────────────────────────────────────────────────
+
     fun showQuickSale() {
         resetQuickState()
         _state.value = _state.value.copy(showQuickSaleDialog = true, showFabMenu = false)
     }
-    fun hideQuickSale() { _state.value = _state.value.copy(showQuickSaleDialog = false, quickSaleComplete = false) }
+    fun hideQuickSale() {
+        _state.value = _state.value.copy(showQuickSaleDialog = false, quickSaleComplete = false)
+    }
 
     fun quickSetSearchQuery(q: String) { _state.value = _state.value.copy(quickSearchQuery = q) }
-    fun quickSelectProduct(p: ProductEntity) { _state.value = _state.value.copy(quickSelectedProduct = p, quickSearchQuery = "", quickQuantity = "1") }
-    fun quickSetQuantity(q: String) { if (q.length <= 6) _state.value = _state.value.copy(quickQuantity = q) }
-    fun quickClearProduct() { _state.value = _state.value.copy(quickSelectedProduct = null, quickQuantity = "1", quickPaymentType = SalePaymentType.CASH) }
+    fun quickSelectProduct(p: ProductEntity) {
+        _state.value = _state.value.copy(quickSelectedProduct = p, quickSearchQuery = "", quickQuantity = "1")
+    }
+    fun quickSetQuantity(q: String) {
+        if (q.length <= 6) _state.value = _state.value.copy(quickQuantity = q)
+    }
+    fun quickClearProduct() {
+        _state.value = _state.value.copy(
+            quickSelectedProduct = null, quickQuantity = "1", quickPaymentType = SalePaymentType.CASH,
+        )
+    }
 
     fun quickCompleteSale() {
-        val s = _state.value
+        val s       = _state.value
         val product = s.quickSelectedProduct ?: return
-        val qty = s.quickQuantity.toDoubleOrNull() ?: return
-        if (qty <= 0) return
-
-        val totalAmount = product.sellPrice * qty
-        val paidAmount = when (s.quickPaymentType) {
-            SalePaymentType.CASH -> totalAmount
-            SalePaymentType.CREDIT -> 0.0
+        val qty     = s.quickQuantity.toDoubleOrNull()?.takeIf { it > 0 } ?: return
+        val total   = product.sellPrice * qty
+        val paid    = when (s.quickPaymentType) {
+            SalePaymentType.CASH    -> total
+            SalePaymentType.CREDIT  -> 0.0
             SalePaymentType.PARTIAL -> s.quickAmount.toDoubleOrNull() ?: 0.0
         }
 
         viewModelScope.launch {
             _state.value = _state.value.copy(quickIsSaving = true)
-            try {
+            runCatching {
                 database.withTransaction {
                     productRepository.removeStock(product.id, qty)
                     transactionRepository.insert(
                         TransactionEntity(
-                            type = TransactionType.SALE,
-                            paymentType = s.quickPaymentType,
-                            productId = product.id,
-                            customerId = s.quickSelectedCustomer?.id,
-                            quantity = qty,
-                            unitPrice = product.sellPrice,
-                            totalAmount = totalAmount,
-                            paidAmount = paidAmount
+                            type         = TransactionType.SALE,
+                            paymentType  = s.quickPaymentType,
+                            productId    = product.id,
+                            customerId   = s.quickSelectedCustomer?.id,
+                            quantity     = qty,
+                            unitPrice    = product.sellPrice,
+                            totalAmount  = total,
+                            paidAmount   = paid,
                         )
                     )
                     if (s.quickSelectedCustomer != null && s.quickPaymentType != SalePaymentType.CASH) {
-                        val dueAmount = totalAmount - paidAmount
-                        customerRepository.addDue(s.quickSelectedCustomer.id, dueAmount)
+                        customerRepository.addDue(s.quickSelectedCustomer.id, total - paid)
                         customerRepository.updateLastTransaction(s.quickSelectedCustomer.id, System.currentTimeMillis())
                     }
                 }
+            }.onSuccess {
                 _state.value = _state.value.copy(quickIsSaving = false, quickSaleComplete = true)
-            } catch (_: Exception) {
+            }.onFailure {
                 _state.value = _state.value.copy(quickIsSaving = false)
             }
         }
     }
 
-    // --- Quick Expense Dialog ---
+    // ── Quick Expense ─────────────────────────────────────────────────────────
+
     fun showQuickExpense() {
         resetQuickState()
         _state.value = _state.value.copy(showQuickExpenseDialog = true, showFabMenu = false)
     }
     fun hideQuickExpense() { _state.value = _state.value.copy(showQuickExpenseDialog = false) }
-    fun quickSetAmount(a: String) { _state.value = _state.value.copy(quickAmount = a) }
+    fun quickSetAmount(a: String)      { _state.value = _state.value.copy(quickAmount = a) }
     fun quickSetDescription(d: String) { _state.value = _state.value.copy(quickDescription = d) }
     fun quickSetExpenseCategory(c: ExpenseCategory) { _state.value = _state.value.copy(quickExpenseCategory = c) }
 
     fun quickAddExpense() {
-        val s = _state.value
-        val amount = s.quickAmount.toDoubleOrNull() ?: return
-        if (amount <= 0) return
-
+        val s      = _state.value
+        val amount = s.quickAmount.toDoubleOrNull()?.takeIf { it > 0 } ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(quickIsSaving = true)
-            try {
+            runCatching {
                 database.withTransaction {
                     expenseRepository.insert(
                         ExpenseEntity(
-                            categoryId = s.quickExpenseCategory,
-                            amount = amount,
+                            categoryId  = s.quickExpenseCategory,
+                            amount      = amount,
                             description = s.quickDescription,
-                            date = System.currentTimeMillis()
+                            date        = System.currentTimeMillis(),
                         )
                     )
                     transactionRepository.insert(
                         TransactionEntity(
-                            type = TransactionType.EXPENSE,
-                            quantity = 1.0,
-                            unitPrice = amount,
+                            type        = TransactionType.EXPENSE,
+                            quantity    = 1.0,
+                            unitPrice   = amount,
                             totalAmount = amount,
-                            notes = s.quickDescription
+                            notes       = s.quickDescription,
                         )
                     )
                 }
+            }.onSuccess {
                 _state.value = _state.value.copy(quickIsSaving = false, showQuickExpenseDialog = false)
-            } catch (_: Exception) {
+            }.onFailure {
                 _state.value = _state.value.copy(quickIsSaving = false)
             }
         }
     }
 
-    // --- Quick Stock Dialog ---
+    // ── Quick Stock ───────────────────────────────────────────────────────────
+
     fun showQuickStock() {
         resetQuickState()
         _state.value = _state.value.copy(showQuickStockDialog = true, showFabMenu = false)
@@ -281,111 +355,108 @@ class DashboardViewModel @Inject constructor(
     fun quickSetStockIsAdd(isAdd: Boolean) { _state.value = _state.value.copy(quickStockIsAdd = isAdd) }
 
     fun quickUpdateStock() {
-        val s = _state.value
+        val s       = _state.value
         val product = s.quickSelectedProduct ?: return
-        val qty = s.quickQuantity.toDoubleOrNull() ?: return
-        if (qty <= 0) return
-
+        val qty     = s.quickQuantity.toDoubleOrNull()?.takeIf { it > 0 } ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(quickIsSaving = true)
-            try {
+            runCatching {
                 database.withTransaction {
                     if (s.quickStockIsAdd) {
                         productRepository.addStock(product.id, qty)
                         transactionRepository.insert(
                             TransactionEntity(
-                                type = TransactionType.PURCHASE,
-                                productId = product.id,
-                                quantity = qty,
-                                unitPrice = product.buyPrice,
+                                type        = TransactionType.PURCHASE,
+                                productId   = product.id,
+                                quantity    = qty,
+                                unitPrice   = product.buyPrice,
                                 totalAmount = product.buyPrice * qty,
-                                notes = s.quickDescription
+                                notes       = s.quickDescription,
                             )
                         )
                     } else {
                         productRepository.removeStock(product.id, qty)
                         transactionRepository.insert(
                             TransactionEntity(
-                                type = TransactionType.STOCK_LOSS,
-                                productId = product.id,
-                                quantity = qty,
-                                unitPrice = 0.0,
+                                type        = TransactionType.STOCK_LOSS,
+                                productId   = product.id,
+                                quantity    = qty,
+                                unitPrice   = 0.0,
                                 totalAmount = 0.0,
-                                notes = s.quickDescription
+                                notes       = s.quickDescription,
                             )
                         )
                     }
                 }
+            }.onSuccess {
                 _state.value = _state.value.copy(quickIsSaving = false, showQuickStockDialog = false)
-            } catch (_: Exception) {
+            }.onFailure {
                 _state.value = _state.value.copy(quickIsSaving = false)
             }
         }
     }
 
-    // --- Quick Payment Dialog ---
+    // ── Quick Payment ─────────────────────────────────────────────────────────
+
     fun showQuickPayment() {
         resetQuickState()
         _state.value = _state.value.copy(showQuickPaymentDialog = true, showFabMenu = false)
     }
     fun hideQuickPayment() { _state.value = _state.value.copy(showQuickPaymentDialog = false) }
-    fun quickSetPaymentIsReceive(isReceive: Boolean) { _state.value = _state.value.copy(quickPaymentIsReceive = isReceive) }
-    fun quickSelectCustomer(c: CustomerEntity) { _state.value = _state.value.copy(quickSelectedCustomer = c, quickSearchQuery = "") }
+    fun quickSetPaymentIsReceive(r: Boolean) { _state.value = _state.value.copy(quickPaymentIsReceive = r) }
+    fun quickSelectCustomer(c: CustomerEntity) {
+        _state.value = _state.value.copy(quickSelectedCustomer = c, quickSearchQuery = "")
+    }
     fun quickClearCustomer() { _state.value = _state.value.copy(quickSelectedCustomer = null) }
+    fun quickSetPaymentType(type: SalePaymentType) { _state.value = _state.value.copy(quickPaymentType = type) }
 
     fun quickRecordPayment() {
-        val s = _state.value
-        val amount = s.quickAmount.toDoubleOrNull() ?: return
-        if (amount <= 0) return
-
+        val s      = _state.value
+        val amount = s.quickAmount.toDoubleOrNull()?.takeIf { it > 0 } ?: return
         viewModelScope.launch {
             _state.value = _state.value.copy(quickIsSaving = true)
-            try {
-                val paymentType = if (s.quickPaymentIsReceive) PaymentType.RECEIVED else PaymentType.PAID
+            runCatching {
+                val pType = if (s.quickPaymentIsReceive) PaymentType.RECEIVED else PaymentType.PAID
                 database.withTransaction {
                     paymentRepository.insert(
                         PaymentEntity(
-                            type = paymentType,
-                            customerId = s.quickSelectedCustomer?.id,
-                            amount = amount,
+                            type          = pType,
+                            customerId    = s.quickSelectedCustomer?.id,
+                            amount        = amount,
                             paymentMethod = PaymentMethod.CASH,
-                            description = s.quickDescription
+                            description   = s.quickDescription,
                         )
                     )
-                    if (s.quickSelectedCustomer != null) {
-                        if (s.quickPaymentIsReceive) {
-                            customerRepository.removeDue(s.quickSelectedCustomer.id, amount)
-                        } else {
-                            customerRepository.addDue(s.quickSelectedCustomer.id, amount)
-                        }
-                        customerRepository.updateLastTransaction(s.quickSelectedCustomer.id, System.currentTimeMillis())
+                    s.quickSelectedCustomer?.let { cust ->
+                        if (s.quickPaymentIsReceive) customerRepository.removeDue(cust.id, amount)
+                        else                         customerRepository.addDue(cust.id, amount)
+                        customerRepository.updateLastTransaction(cust.id, System.currentTimeMillis())
                     }
                 }
+            }.onSuccess {
                 _state.value = _state.value.copy(quickIsSaving = false, showQuickPaymentDialog = false)
-            } catch (_: Exception) {
+            }.onFailure {
                 _state.value = _state.value.copy(quickIsSaving = false)
             }
         }
     }
 
-    fun quickSetPaymentType(type: SalePaymentType) {
-        _state.value = _state.value.copy(quickPaymentType = type)
-    }
+    // ── Helpers ───────────────────────────────────────────────────────────────
 
     private fun resetQuickState() {
         _state.value = _state.value.copy(
-            quickSearchQuery = "",
+            quickSearchQuery    = "",
             quickSelectedProduct = null,
             quickSelectedCustomer = null,
-            quickQuantity = "1",
-            quickAmount = "",
-            quickDescription = "",
+            quickQuantity       = "1",
+            quickAmount         = "",
+            quickDescription    = "",
             quickExpenseCategory = ExpenseCategory.OTHER,
-            quickPaymentType = SalePaymentType.CASH,
-            quickStockIsAdd = true,
+            quickPaymentType    = SalePaymentType.CASH,
+            quickStockIsAdd     = true,
             quickPaymentIsReceive = true,
-            quickIsSaving = false,
-            quickSaleComplete = false
+            quickIsSaving       = false,
+            quickSaleComplete   = false,
         )
     }
 }
