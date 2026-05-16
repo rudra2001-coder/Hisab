@@ -59,7 +59,7 @@ class InventoryViewModel @Inject constructor(
                 categoryRepository.getAllCategories(),
                 appPreferences.settings
             ) { products, categories, settings ->
-                Pair(Pair(products, categories), settings.isBangla)
+                Pair(Pair(products, categories), settings.languageCode == "bn")
             }.collect { (first, isBangla) ->
                 val (products, categories) = first
                 _state.value = _state.value.copy(

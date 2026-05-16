@@ -79,6 +79,7 @@ import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.OrangeDue
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.CurrencyFormatter
+import com.rudra.hisab.util.LocalStrings
 
 @Composable
 fun DashboardScreen(
@@ -89,15 +90,14 @@ fun DashboardScreen(
     onNavigateToCustomers: () -> Unit,
     onNavigateToAddStock: (() -> Unit)? = null
 ) {
-    val state by viewModel.state.collectAsState()
-    val isBangla = state.isBangla
+     val state by viewModel.state.collectAsState()
+     val strings = LocalStrings.current
     val primaryColor = MaterialTheme.colorScheme.primary
 
     Scaffold(
         floatingActionButton = {
             DashboardFabMenu(
                 expanded = state.showFabMenu,
-                isBangla = isBangla,
                 onToggle = viewModel::toggleFabMenu,
                 onSale = viewModel::showQuickSale,
                 onExpense = viewModel::showQuickExpense,
@@ -114,31 +114,31 @@ fun DashboardScreen(
             val actionMap = remember {
                 mapOf(
                     "sale" to ActionDef(
-                        if (isBangla) "বিক্রয়" else "Sale",
+                        strings.qaSale,
                         Icons.Default.AttachMoney, GreenProfit, onNavigateToSale
                     ),
                     "stock" to ActionDef(
-                        if (isBangla) "স্টক" else "Stock",
+                        strings.qaStock,
                         Icons.Default.Inventory2, BlueInfo, onNavigateToInventory
                     ),
                     "expense" to ActionDef(
-                        if (isBangla) "খরচ" else "Expense",
+                        strings.qaExpense,
                         Icons.Default.MoneyOff, RedExpense, onNavigateToExpenses
                     ),
                     "customer" to ActionDef(
-                        if (isBangla) "গ্রাহক" else "Customer",
+                        strings.customerLabel,
                         Icons.Default.People, OrangeDue, onNavigateToCustomers
                     ),
                     "purchase" to ActionDef(
-                        if (isBangla) "ক্রয়" else "Purchase",
+                        strings.qaPurchase,
                         Icons.Default.ShoppingCart, primaryColor, onNavigateToInventory
                     )
                 )
             }
 
-            val enabledActions by remember(state.quickActions, isBangla) {
-                derivedStateOf { state.quickActions.mapNotNull { actionMap[it] } }
-            }
+             val enabledActions by remember(state.quickActions) {
+                 derivedStateOf { state.quickActions.mapNotNull { actionMap[it] } }
+             }
 
             Column(
                 modifier = Modifier
@@ -191,7 +191,7 @@ fun DashboardScreen(
                     ) {
                         MetricCard(
                             modifier = Modifier.weight(1f),
-                            label = if (isBangla) "আজকের বিক্রয়" else "Today's Sales",
+                            label = strings.todaysSales,
                             amount = state.todaySales,
                             icon = Icons.Default.TrendingUp,
                             color = GreenProfit,
@@ -199,7 +199,7 @@ fun DashboardScreen(
                         )
                         MetricCard(
                             modifier = Modifier.weight(1f),
-                            label = if (isBangla) "নিট মুনাফা" else "Net Profit",
+                            label = strings.netProfit,
                             amount = state.netProfit,
                             icon = Icons.Default.AttachMoney,
                             color = if (state.netProfit >= 0) GreenProfit else RedExpense,
@@ -213,7 +213,7 @@ fun DashboardScreen(
                     ) {
                         MetricCard(
                             modifier = Modifier.weight(1f),
-                            label = if (isBangla) "আজকের খরচ" else "Today's Expenses",
+                            label = strings.todaysExpenses,
                             amount = state.todayExpenses,
                             icon = Icons.Default.MoneyOff,
                             color = RedExpense,
@@ -221,7 +221,7 @@ fun DashboardScreen(
                         )
                         MetricCard(
                             modifier = Modifier.weight(1f),
-                            label = if (isBangla) "মোট বাকি" else "Total Dues",
+                            label = strings.totalDues,
                             amount = state.totalDues,
                             icon = Icons.Default.People,
                             color = OrangeDue,
@@ -233,7 +233,7 @@ fun DashboardScreen(
 
                     // ── Mini Stats Horizontal Row ──
                     Text(
-                        text = if (isBangla) "দ্রুত পরিসংখ্যান" else "Quick Stats",
+                        text = strings.quickStats,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -245,27 +245,27 @@ fun DashboardScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         MiniStatChip(
-                            label = if (isBangla) "বিক্রয় সংখ্যা" else "Sale Count",
+                            label = strings.saleCount,
                             value = "${state.todaySaleCount}",
                             color = GreenProfit
                         )
                         MiniStatChip(
-                            label = if (isBangla) "ক্রয় (টাকা)" else "Purchases",
+                            label = strings.purchases,
                             value = CurrencyFormatter.format(state.todayPurchases),
                             color = BlueInfo
                         )
                         MiniStatChip(
-                            label = if (isBangla) "ক্রেডিট" else "Credit Given",
+                            label = strings.creditGiven,
                             value = CurrencyFormatter.format(state.todayCreditGiven),
                             color = OrangeDue
                         )
                         MiniStatChip(
-                            label = if (isBangla) "পণ্য" else "Products",
+                            label = strings.products,
                             value = "${state.totalProductCount}",
                             color = primaryColor
                         )
                         MiniStatChip(
-                            label = if (isBangla) "গ্রাহক" else "Customers",
+                            label = strings.customers,
                             value = "${state.totalCustomerCount}",
                             color = OrangeDue
                         )
@@ -275,7 +275,7 @@ fun DashboardScreen(
 
                     // ── Stock Overview ──
                     Text(
-                        text = if (isBangla) "স্টক ওভারভিউ" else "Stock Overview",
+                        text = strings.stockOverview,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -284,7 +284,6 @@ fun DashboardScreen(
                         totalProducts = state.totalProductCount,
                         totalStockValue = state.totalStockValue,
                         lowStockCount = state.lowStockCount,
-                        isBangla = isBangla,
                         onClick = { onNavigateToAddStock?.invoke() }
                     )
 
@@ -297,7 +296,6 @@ fun DashboardScreen(
                             Spacer(modifier = Modifier.height(12.dp))
                             LowStockAlertCard(
                                 lowStockCount = state.lowStockCount,
-                                isBangla = isBangla,
                                 onClick = { onNavigateToAddStock?.invoke() }
                             )
                         }
@@ -307,7 +305,7 @@ fun DashboardScreen(
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = if (isBangla) "দ্রুত অ্যাকশন" else "Quick Actions",
+                    text = strings.quickActions,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -342,16 +340,16 @@ fun DashboardScreen(
 
     // Dialogs
     if (state.showQuickSaleDialog) {
-        QuickSaleDialog(state = state, viewModel = viewModel, isBangla = isBangla)
+        QuickSaleDialog(state = state, viewModel = viewModel)
     }
     if (state.showQuickExpenseDialog) {
-        QuickExpenseDialog(state = state, viewModel = viewModel, isBangla = isBangla)
+        QuickExpenseDialog(state = state, viewModel = viewModel)
     }
     if (state.showQuickStockDialog) {
-        QuickStockDialog(state = state, viewModel = viewModel, isBangla = isBangla)
+        QuickStockDialog(state = state, viewModel = viewModel)
     }
     if (state.showQuickPaymentDialog) {
-        QuickPaymentDialog(state = state, viewModel = viewModel, isBangla = isBangla)
+        QuickPaymentDialog(state = state, viewModel = viewModel)
     }
 }
 
@@ -360,13 +358,13 @@ fun DashboardScreen(
 @Composable
 private fun DashboardFabMenu(
     expanded: Boolean,
-    isBangla: Boolean,
     onToggle: () -> Unit,
     onSale: () -> Unit,
     onExpense: () -> Unit,
     onStock: () -> Unit,
     onPayment: () -> Unit
 ) {
+    val strings = LocalStrings.current
     Column(horizontalAlignment = Alignment.End) {
         AnimatedVisibility(
             visible = expanded,
@@ -374,10 +372,10 @@ private fun DashboardFabMenu(
             exit = fadeOut() + slideOutVertically(targetOffsetY = { it })
         ) {
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FabActionItem(icon = Icons.Default.Sell, label = if (isBangla) "বিক্রয়" else "Sale", color = GreenProfit, onClick = onSale)
-                FabActionItem(icon = Icons.Default.MoneyOff, label = if (isBangla) "খরচ" else "Expense", color = RedExpense, onClick = onExpense)
-                FabActionItem(icon = Icons.Default.Inventory2, label = if (isBangla) "স্টক" else "Stock", color = BlueInfo, onClick = onStock)
-                FabActionItem(icon = Icons.Default.Payment, label = if (isBangla) "পেমেন্ট" else "Payment", color = OrangeDue, onClick = onPayment)
+                FabActionItem(icon = Icons.Default.Sell, label = strings.qaSale, color = GreenProfit, onClick = onSale)
+                FabActionItem(icon = Icons.Default.MoneyOff, label = strings.qaExpense, color = RedExpense, onClick = onExpense)
+                FabActionItem(icon = Icons.Default.Inventory2, label = strings.qaStock, color = BlueInfo, onClick = onStock)
+                FabActionItem(icon = Icons.Default.Payment, label = strings.qaPayment, color = OrangeDue, onClick = onPayment)
             }
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -508,9 +506,9 @@ private fun StockOverviewCard(
     totalProducts: Int,
     totalStockValue: Double,
     lowStockCount: Int,
-    isBangla: Boolean,
     onClick: () -> Unit
 ) {
+    val strings = LocalStrings.current
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -537,7 +535,7 @@ private fun StockOverviewCard(
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = if (isBangla) "ইনভেন্টরি সারসংক্ষেপ" else "Inventory Summary",
+                    text = strings.inventorySummary,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -547,17 +545,17 @@ private fun StockOverviewCard(
 
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 StockStatItem(
-                    label = if (isBangla) "মোট পণ্য" else "Total Products",
+                    label = strings.totalProducts,
                     value = "$totalProducts",
                     color = BlueInfo
                 )
                 StockStatItem(
-                    label = if (isBangla) "স্টক মূল্য" else "Stock Value",
+                    label = strings.stockValue,
                     value = CurrencyFormatter.format(totalStockValue),
                     color = GreenProfit
                 )
                 StockStatItem(
-                    label = if (isBangla) "কম স্টক" else "Low Stock",
+                    label = strings.lowStock,
                     value = "$lowStockCount",
                     color = if (lowStockCount > 0) RedExpense else GreenProfit
                 )
@@ -578,7 +576,7 @@ private fun StockOverviewCard(
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (isBangla) "স্টক স্বাস্থ্য" else "Stock Health",
+                        text = strings.stockHealth,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -603,7 +601,7 @@ private fun StockOverviewCard(
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        text = if (isBangla) "স্টক স্বাস্থ্য" else "Stock Health",
+                        text = strings.stockHealth,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -625,7 +623,7 @@ private fun StockOverviewCard(
                     }
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        text = if (isBangla) "ভাল" else "Good",
+                        text = strings.good,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Medium,
                         color = GreenProfit
@@ -657,17 +655,18 @@ private fun StockStatItem(label: String, value: String, color: Color) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel, isBangla: Boolean) {
+private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel) {
+    val strings = LocalStrings.current
     AlertDialog(
         onDismissRequest = viewModel::hideQuickSale,
-        title = { Text(if (isBangla) "দ্রুত বিক্রয়" else "Quick Sale") },
+        title = { Text(strings.quickSale) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (state.quickSelectedProduct == null) {
                     OutlinedTextField(
                         value = state.quickSearchQuery,
                         onValueChange = viewModel::quickSetSearchQuery,
-                        placeholder = { Text(if (isBangla) "পণ্য খুঁজুন..." else "Search products...") },
+                        placeholder = { Text(strings.searchProducts) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
@@ -683,7 +682,7 @@ private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel
                                 FilterChip(
                                     selected = false,
                                     onClick = { viewModel.quickSelectProduct(product) },
-                                    label = { Text(if (isBangla) product.nameBangla else product.name, style = MaterialTheme.typography.bodySmall) }
+                                    label = { Text(strings.nameOrBangla(product.name, product.nameBangla), style = MaterialTheme.typography.bodySmall) }
                                 )
                             }
                         }
@@ -691,24 +690,24 @@ private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel
                 } else {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column {
-                            Text(if (isBangla) state.quickSelectedProduct.nameBangla else state.quickSelectedProduct.name, fontWeight = FontWeight.Bold)
+                            Text(strings.nameOrBangla(state.quickSelectedProduct.name, state.quickSelectedProduct.nameBangla), fontWeight = FontWeight.Bold)
                             Text("${CurrencyFormatter.format(state.quickSelectedProduct.sellPrice)} / ${state.quickSelectedProduct.unit}", style = MaterialTheme.typography.bodySmall)
                         }
-                        TextButton(onClick = viewModel::quickClearProduct) { Text(if (isBangla) "পরিবর্তন" else "Change") }
+                        TextButton(onClick = viewModel::quickClearProduct) { Text(strings.change) }
                     }
                     Spacer(modifier = Modifier.height(4.dp))
                     OutlinedTextField(
                         value = state.quickQuantity,
                         onValueChange = viewModel::quickSetQuantity,
-                        label = { Text(if (isBangla) "পরিমাণ" else "Quantity") },
+                        label = { Text(strings.quantity) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
                     val total = (state.quickQuantity.toDoubleOrNull() ?: 0.0) * (state.quickSelectedProduct.sellPrice)
-                    Text("${if (isBangla) "মোট" else "Total"}: ${CurrencyFormatter.format(total)}", fontWeight = FontWeight.Bold, color = GreenProfit)
+                    Text("${strings.total}: ${CurrencyFormatter.format(total)}", fontWeight = FontWeight.Bold, color = GreenProfit)
 
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text(if (isBangla) "পরিশোধের ধরন" else "Payment Type", style = MaterialTheme.typography.bodySmall)
+                    Text(strings.paymentType, style = MaterialTheme.typography.bodySmall)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         SalePaymentType.entries.forEach { type ->
                             FilterChip(
@@ -716,9 +715,9 @@ private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel
                                 onClick = { viewModel.quickSetPaymentType(type) },
                                 label = { Text(
                                     when (type) {
-                                        SalePaymentType.CASH -> if (isBangla) "নগদ" else "Cash"
-                                        SalePaymentType.CREDIT -> if (isBangla) "বাকি" else "Credit"
-                                        SalePaymentType.PARTIAL -> if (isBangla) "আংশিক" else "Partial"
+                                        SalePaymentType.CASH -> strings.cash
+                                        SalePaymentType.CREDIT -> strings.credit
+                                        SalePaymentType.PARTIAL -> strings.partial
                                     }, style = MaterialTheme.typography.bodySmall
                                 ) },
                                 colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GreenProfit.copy(alpha = 0.2f))
@@ -730,7 +729,7 @@ private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel
                         OutlinedTextField(
                             value = state.quickAmount,
                             onValueChange = viewModel::quickSetAmount,
-                            label = { Text(if (isBangla) "পরিশোধিত পরিমাণ" else "Paid Amount") },
+                            label = { Text(strings.paidAmount) },
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                             modifier = Modifier.fillMaxWidth(), singleLine = true
                         )
@@ -738,7 +737,7 @@ private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel
 
                     if (state.quickSaleComplete) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(if (isBangla) "বিক্রয় সফল!" else "Sale successful!", color = GreenProfit, fontWeight = FontWeight.Bold)
+                        Text(strings.saleSuccessful, color = GreenProfit, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -748,10 +747,10 @@ private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel
                 Button(
                     onClick = viewModel::quickCompleteSale,
                     enabled = !state.quickIsSaving && (state.quickQuantity.toDoubleOrNull() ?: 0.0) > 0
-                ) { Text(if (state.quickIsSaving) (if (isBangla) "হিসাব করা হচ্ছে..." else "Processing...") else (if (isBangla) "নিশ্চিত" else "Confirm")) }
+                ) { Text(if (state.quickIsSaving) strings.processing else strings.confirm) }
             }
         },
-        dismissButton = { TextButton(onClick = viewModel::hideQuickSale) { Text(if (isBangla) "বন্ধ" else "Close") } }
+        dismissButton = { TextButton(onClick = viewModel::hideQuickSale) { Text(strings.close) } }
     )
 }
 
@@ -759,26 +758,27 @@ private fun QuickSaleDialog(state: DashboardState, viewModel: DashboardViewModel
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun QuickExpenseDialog(state: DashboardState, viewModel: DashboardViewModel, isBangla: Boolean) {
+private fun QuickExpenseDialog(state: DashboardState, viewModel: DashboardViewModel) {
+    val strings = LocalStrings.current
     AlertDialog(
         onDismissRequest = viewModel::hideQuickExpense,
-        title = { Text(if (isBangla) "দ্রুত খরচ" else "Quick Expense") },
+        title = { Text(strings.quickExpense) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = state.quickAmount,
                     onValueChange = viewModel::quickSetAmount,
-                    label = { Text(if (isBangla) "পরিমাণ" else "Amount") },
+                    label = { Text(strings.amount) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(), singleLine = true
                 )
                 OutlinedTextField(
                     value = state.quickDescription,
                     onValueChange = viewModel::quickSetDescription,
-                    label = { Text(if (isBangla) "বিবরণ" else "Description") },
+                    label = { Text(strings.description) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true
                 )
-                Text(if (isBangla) "ক্যাটাগরি" else "Category", style = MaterialTheme.typography.bodySmall)
+                Text(strings.category, style = MaterialTheme.typography.bodySmall)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     ExpenseCategory.entries.forEach { cat ->
                         FilterChip(
@@ -795,9 +795,9 @@ private fun QuickExpenseDialog(state: DashboardState, viewModel: DashboardViewMo
             Button(
                 onClick = viewModel::quickAddExpense,
                 enabled = !state.quickIsSaving && (state.quickAmount.toDoubleOrNull() ?: 0.0) > 0
-            ) { Text(if (state.quickIsSaving) (if (isBangla) "সংরক্ষণ..." else "Saving...") else (if (isBangla) "সংরক্ষণ" else "Save")) }
+            ) { Text(if (state.quickIsSaving) strings.saving else strings.save) }
         },
-        dismissButton = { TextButton(onClick = viewModel::hideQuickExpense) { Text(if (isBangla) "বাতিল" else "Cancel") } }
+        dismissButton = { TextButton(onClick = viewModel::hideQuickExpense) { Text(strings.cancel) } }
     )
 }
 
@@ -805,22 +805,23 @@ private fun QuickExpenseDialog(state: DashboardState, viewModel: DashboardViewMo
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun QuickStockDialog(state: DashboardState, viewModel: DashboardViewModel, isBangla: Boolean) {
+private fun QuickStockDialog(state: DashboardState, viewModel: DashboardViewModel) {
+    val strings = LocalStrings.current
     AlertDialog(
         onDismissRequest = viewModel::hideQuickStock,
-        title = { Text(if (isBangla) "দ্রুত স্টক" else "Quick Stock") },
+        title = { Text(strings.quickStock) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = state.quickStockIsAdd, onClick = { viewModel.quickSetStockIsAdd(true) }, label = { Text(if (isBangla) "স্টক ইন" else "Stock In") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GreenProfit.copy(alpha = 0.2f)))
-                    FilterChip(selected = !state.quickStockIsAdd, onClick = { viewModel.quickSetStockIsAdd(false) }, label = { Text(if (isBangla) "স্টক আউট" else "Stock Out") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = RedExpense.copy(alpha = 0.2f)))
+                    FilterChip(selected = state.quickStockIsAdd, onClick = { viewModel.quickSetStockIsAdd(true) }, label = { Text(strings.stockIn) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GreenProfit.copy(alpha = 0.2f)))
+                    FilterChip(selected = !state.quickStockIsAdd, onClick = { viewModel.quickSetStockIsAdd(false) }, label = { Text(strings.stockOut) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = RedExpense.copy(alpha = 0.2f)))
                 }
 
                 if (state.quickSelectedProduct == null) {
                     OutlinedTextField(
                         value = state.quickSearchQuery,
                         onValueChange = viewModel::quickSetSearchQuery,
-                        placeholder = { Text(if (isBangla) "পণ্য খুঁজুন..." else "Search products...") },
+                        placeholder = { Text(strings.searchProducts) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
@@ -835,7 +836,7 @@ private fun QuickStockDialog(state: DashboardState, viewModel: DashboardViewMode
                                 FilterChip(
                                     selected = false,
                                     onClick = { viewModel.quickSelectProduct(product) },
-                                    label = { Text(if (isBangla) product.nameBangla else product.name, style = MaterialTheme.typography.bodySmall) }
+                                    label = { Text(strings.nameOrBangla(product.name, product.nameBangla), style = MaterialTheme.typography.bodySmall) }
                                 )
                             }
                         }
@@ -843,22 +844,22 @@ private fun QuickStockDialog(state: DashboardState, viewModel: DashboardViewMode
                 } else {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column {
-                            Text(if (isBangla) state.quickSelectedProduct.nameBangla else state.quickSelectedProduct.name, fontWeight = FontWeight.Bold)
-                            Text("${if (isBangla) "স্টক" else "Stock"}: ${state.quickSelectedProduct.currentStock.toInt()}", style = MaterialTheme.typography.bodySmall)
+                            Text(strings.nameOrBangla(state.quickSelectedProduct.name, state.quickSelectedProduct.nameBangla), fontWeight = FontWeight.Bold)
+                            Text("${strings.stockLabel}: ${state.quickSelectedProduct.currentStock.toInt()}", style = MaterialTheme.typography.bodySmall)
                         }
-                        TextButton(onClick = { viewModel.quickClearProduct() }) { Text(if (isBangla) "পরিবর্তন" else "Change") }
+                        TextButton(onClick = { viewModel.quickClearProduct() }) { Text(strings.change) }
                     }
                     OutlinedTextField(
                         value = state.quickQuantity,
                         onValueChange = viewModel::quickSetQuantity,
-                        label = { Text(if (isBangla) "পরিমাণ" else "Quantity") },
+                        label = { Text(strings.quantity) },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
                     OutlinedTextField(
                         value = state.quickDescription,
                         onValueChange = viewModel::quickSetDescription,
-                        label = { Text(if (isBangla) "নোট" else "Note") },
+                        label = { Text(strings.notes) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
                 }
@@ -869,10 +870,10 @@ private fun QuickStockDialog(state: DashboardState, viewModel: DashboardViewMode
                 Button(
                     onClick = viewModel::quickUpdateStock,
                     enabled = !state.quickIsSaving && (state.quickQuantity.toDoubleOrNull() ?: 0.0) > 0
-                ) { Text(if (state.quickIsSaving) (if (isBangla) "সংরক্ষণ..." else "Saving...") else (if (isBangla) "সংরক্ষণ" else "Save")) }
+                ) { Text(if (state.quickIsSaving) strings.saving else strings.save) }
             }
         },
-        dismissButton = { TextButton(onClick = viewModel::hideQuickStock) { Text(if (isBangla) "বাতিল" else "Cancel") } }
+        dismissButton = { TextButton(onClick = viewModel::hideQuickStock) { Text(strings.cancel) } }
     )
 }
 
@@ -880,22 +881,23 @@ private fun QuickStockDialog(state: DashboardState, viewModel: DashboardViewMode
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun QuickPaymentDialog(state: DashboardState, viewModel: DashboardViewModel, isBangla: Boolean) {
+private fun QuickPaymentDialog(state: DashboardState, viewModel: DashboardViewModel) {
+    val strings = LocalStrings.current
     AlertDialog(
         onDismissRequest = viewModel::hideQuickPayment,
-        title = { Text(if (isBangla) "দ্রুত পেমেন্ট" else "Quick Payment") },
+        title = { Text(strings.quickPayment) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(selected = state.quickPaymentIsReceive, onClick = { viewModel.quickSetPaymentIsReceive(true) }, label = { Text(if (isBangla) "প্রাপ্তি" else "Receive") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GreenProfit.copy(alpha = 0.2f)))
-                    FilterChip(selected = !state.quickPaymentIsReceive, onClick = { viewModel.quickSetPaymentIsReceive(false) }, label = { Text(if (isBangla) "পরিশোধ" else "Pay") }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = RedExpense.copy(alpha = 0.2f)))
+                    FilterChip(selected = state.quickPaymentIsReceive, onClick = { viewModel.quickSetPaymentIsReceive(true) }, label = { Text(strings.receive) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = GreenProfit.copy(alpha = 0.2f)))
+                    FilterChip(selected = !state.quickPaymentIsReceive, onClick = { viewModel.quickSetPaymentIsReceive(false) }, label = { Text(strings.pay) }, colors = FilterChipDefaults.filterChipColors(selectedContainerColor = RedExpense.copy(alpha = 0.2f)))
                 }
 
                 if (state.quickSelectedCustomer == null) {
                     OutlinedTextField(
                         value = state.quickSearchQuery,
                         onValueChange = viewModel::quickSetSearchQuery,
-                        placeholder = { Text(if (isBangla) "গ্রাহক খুঁজুন..." else "Search customers...") },
+                        placeholder = { Text(strings.searchCustomers) },
                         leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                         modifier = Modifier.fillMaxWidth(), singleLine = true
                     )
@@ -919,16 +921,16 @@ private fun QuickPaymentDialog(state: DashboardState, viewModel: DashboardViewMo
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                         Column {
                             Text(state.quickSelectedCustomer.name, fontWeight = FontWeight.Bold)
-                            Text("${if (isBangla) "বাকি" else "Due"}: ${CurrencyFormatter.format(state.quickSelectedCustomer.totalDue)}", style = MaterialTheme.typography.bodySmall, color = OrangeDue)
+                            Text("${strings.due}: ${CurrencyFormatter.format(state.quickSelectedCustomer.totalDue)}", style = MaterialTheme.typography.bodySmall, color = OrangeDue)
                         }
-                        TextButton(onClick = viewModel::quickClearCustomer) { Text(if (isBangla) "পরিবর্তন" else "Change") }
+                        TextButton(onClick = viewModel::quickClearCustomer) { Text(strings.change) }
                     }
                 }
 
                 OutlinedTextField(
                     value = state.quickAmount,
                     onValueChange = viewModel::quickSetAmount,
-                    label = { Text(if (isBangla) "পরিমাণ" else "Amount") },
+                    label = { Text(strings.amount) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth(), singleLine = true
                 )
@@ -936,7 +938,7 @@ private fun QuickPaymentDialog(state: DashboardState, viewModel: DashboardViewMo
                 OutlinedTextField(
                     value = state.quickDescription,
                     onValueChange = viewModel::quickSetDescription,
-                    label = { Text(if (isBangla) "বিবরণ" else "Description") },
+                    label = { Text(strings.description) },
                     modifier = Modifier.fillMaxWidth(), singleLine = true
                 )
             }
@@ -945,9 +947,9 @@ private fun QuickPaymentDialog(state: DashboardState, viewModel: DashboardViewMo
             Button(
                 onClick = viewModel::quickRecordPayment,
                 enabled = !state.quickIsSaving && (state.quickAmount.toDoubleOrNull() ?: 0.0) > 0
-            ) { Text(if (state.quickIsSaving) (if (isBangla) "সংরক্ষণ..." else "Saving...") else (if (isBangla) "সংরক্ষণ" else "Save")) }
+            ) { Text(if (state.quickIsSaving) strings.saving else strings.save) }
         },
-        dismissButton = { TextButton(onClick = viewModel::hideQuickPayment) { Text(if (isBangla) "বাতিল" else "Cancel") } }
+        dismissButton = { TextButton(onClick = viewModel::hideQuickPayment) { Text(strings.cancel) } }
     )
 }
 
@@ -963,9 +965,9 @@ private data class ActionDef(
 @Composable
 private fun LowStockAlertCard(
     lowStockCount: Int,
-    isBangla: Boolean,
     onClick: () -> Unit
 ) {
+    val strings = LocalStrings.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -1009,13 +1011,13 @@ private fun LowStockAlertCard(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = if (isBangla) "$lowStockCount টি পণ্যের স্টক কম!" else "$lowStockCount products low on stock!",
+                    text = strings.lowStockLabel(lowStockCount),
                     style = MaterialTheme.typography.bodyLarge,
                     color = OrangeDue,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
-                    text = if (isBangla) "স্টক ইন করতে ট্যাপ করুন" else "Tap to restock",
+                    text = strings.tapToRestock,
                     style = MaterialTheme.typography.bodySmall,
                     color = OrangeDue.copy(alpha = 0.7f)
                 )

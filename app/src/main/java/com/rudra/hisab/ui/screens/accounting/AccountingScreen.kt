@@ -46,8 +46,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.rudra.hisab.data.local.entity.LedgerEntryEntity
 import com.rudra.hisab.ui.theme.GreenProfit
+import com.rudra.hisab.util.Strings
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.CurrencyFormatter
+import com.rudra.hisab.util.LocalStrings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -59,6 +61,7 @@ fun AccountingScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
     val isBangla = state.isBangla
+    val strings = LocalStrings.current
     val sdf = remember { SimpleDateFormat("dd MMM yyyy, hh:mm a", Locale.getDefault()) }
 
     Scaffold(
@@ -88,7 +91,7 @@ fun AccountingScreen(
                 .padding(16.dp)
         ) {
             Text(
-                text = if (isBangla) "অ্যাকাউন্টিং" else "Accounting",
+                text = strings.accounting,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -103,9 +106,9 @@ fun AccountingScreen(
                         text = {
                             Text(
                                 text = when (tab) {
-                                    AccountingTab.CASH_BOOK -> if (isBangla) "ক্যাশ বুক" else "Cash Book"
-                                    AccountingTab.LEDGER -> if (isBangla) "লেজার" else "Ledger"
-                                    AccountingTab.EXPENSES -> if (isBangla) "খরচ" else "Expenses"
+                                    AccountingTab.CASH_BOOK -> strings.cashBook
+                                    AccountingTab.LEDGER -> strings.ledger
+                                    AccountingTab.EXPENSES -> strings.expenses
                                 }
                             )
                         }
@@ -116,27 +119,27 @@ fun AccountingScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             when (state.selectedTab) {
-                AccountingTab.CASH_BOOK -> CashBookContent(state, sdf, isBangla)
-                AccountingTab.LEDGER -> LedgerContent(state, isBangla)
-                AccountingTab.EXPENSES -> ExpensesContent(isBangla)
+                AccountingTab.CASH_BOOK -> CashBookContent(state, sdf, strings)
+                AccountingTab.LEDGER -> LedgerContent(state, strings)
+                AccountingTab.EXPENSES -> ExpensesContent(strings)
             }
         }
 
         if (state.showAddCashEntryDialog) {
-            AddCashEntryDialog(state, viewModel, isBangla)
+            AddCashEntryDialog(state, viewModel, strings)
         }
     }
 }
 
 @Composable
-private fun CashBookContent(state: AccountingUiState, sdf: SimpleDateFormat, isBangla: Boolean) {
+private fun CashBookContent(state: AccountingUiState, sdf: SimpleDateFormat, strings: com.rudra.hisab.util.Strings) {
     val todayIn = state.cashBookEntries.filter { it.type == "CASH_IN" }.sumOf { it.amount }
     val todayOut = state.cashBookEntries.filter { it.type == "CASH_OUT" }.sumOf { it.amount }
 
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SummaryCard(if (isBangla) "আজকের ইন" else "Today's In", todayIn, GreenProfit, Modifier.weight(1f))
-        SummaryCard(if (isBangla) "আজকের আউট" else "Today's Out", todayOut, RedExpense, Modifier.weight(1f))
-        SummaryCard(if (isBangla) "নেট ব্যালেন্স" else "Net Balance", todayIn - todayOut, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+        SummaryCard(strings.todaysIn, todayIn, GreenProfit, Modifier.weight(1f))
+        SummaryCard(strings.todaysOut, todayOut, RedExpense, Modifier.weight(1f))
+        SummaryCard(strings.netBalance, todayIn - todayOut, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -149,11 +152,11 @@ private fun CashBookContent(state: AccountingUiState, sdf: SimpleDateFormat, isB
 }
 
 @Composable
-private fun LedgerContent(state: AccountingUiState, isBangla: Boolean) {
+private fun LedgerContent(state: AccountingUiState, strings: com.rudra.hisab.util.Strings) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        SummaryCard(if (isBangla) "গ্রাহক" else "Customer", state.customerBalance, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
-        SummaryCard(if (isBangla) "সরবরাহকারী" else "Supplier", state.supplierBalance, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
-        SummaryCard(if (isBangla) "জেনারেল" else "General", state.generalBalance, MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
+        SummaryCard(strings.customerLabel, state.customerBalance, MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+        SummaryCard(strings.supplier, state.supplierBalance, MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+        SummaryCard(strings.general, state.generalBalance, MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
     }
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -166,10 +169,10 @@ private fun LedgerContent(state: AccountingUiState, isBangla: Boolean) {
 }
 
 @Composable
-private fun ExpensesContent(isBangla: Boolean) {
+private fun ExpensesContent(strings: com.rudra.hisab.util.Strings) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(
-            if (isBangla) "খরচ ব্যবস্থাপনা শীঘ্রই আসছে" else "Expense management coming soon",
+            strings.expenseComingSoon,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
@@ -250,28 +253,28 @@ private fun LedgerRow(entry: com.rudra.hisab.data.local.entity.LedgerEntryEntity
 }
 
 @Composable
-private fun AddCashEntryDialog(state: AccountingUiState, viewModel: AccountingViewModel, isBangla: Boolean) {
+private fun AddCashEntryDialog(state: AccountingUiState, viewModel: AccountingViewModel, strings: com.rudra.hisab.util.Strings) {
     AlertDialog(
         onDismissRequest = viewModel::hideAddCashEntry,
-        title = { Text(if (state.cashEntryType == "CASH_IN") (if (isBangla) "ক্যাশ ইন" else "Cash In") else (if (isBangla) "ক্যাশ আউট" else "Cash Out")) },
+        title = { Text(if (state.cashEntryType == "CASH_IN") strings.cashIn else strings.cashOut) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = state.cashEntryAmount,
                     onValueChange = viewModel::setCashEntryAmount,
-                    label = { Text(if (isBangla) "পরিমাণ" else "Amount") },
+                    label = { Text(strings.amount) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true
                 )
                 OutlinedTextField(
                     value = state.cashEntryDescription,
                     onValueChange = viewModel::setCashEntryDescription,
-                    label = { Text(if (isBangla) "বিবরণ" else "Description") },
+                    label = { Text(strings.description) },
                     singleLine = true
                 )
             }
         },
-        confirmButton = { Button(onClick = viewModel::saveCashEntry) { Text(if (isBangla) "সংরক্ষণ" else "Save") } },
-        dismissButton = { TextButton(onClick = viewModel::hideAddCashEntry) { Text(if (isBangla) "বাতিল" else "Cancel") } }
+        confirmButton = { Button(onClick = viewModel::saveCashEntry) { Text(strings.save) } },
+        dismissButton = { TextButton(onClick = viewModel::hideAddCashEntry) { Text(strings.cancel) } }
     )
 }

@@ -77,10 +77,15 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun toggleLanguage() {
+    fun setLanguage(code: String) {
         viewModelScope.launch {
-            appPreferences.setBangla(!_state.value.settings.isBangla)
+            appPreferences.setLanguageCode(code)
         }
+    }
+
+    fun toggleLanguage() {
+        val newCode = if (_state.value.settings.languageCode == "bn") "en" else "bn"
+        setLanguage(newCode)
     }
 
     fun showPinSetup() { showPinDialog(PinMode.SETUP) }

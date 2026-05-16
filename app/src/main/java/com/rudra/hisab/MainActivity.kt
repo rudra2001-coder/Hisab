@@ -16,6 +16,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,6 +40,10 @@ import com.rudra.hisab.data.preferences.AppPreferences
 import com.rudra.hisab.ui.navigation.BottomNavBar
 import com.rudra.hisab.ui.navigation.Routes
 import com.rudra.hisab.ui.navigation.allNavItems
+import com.rudra.hisab.util.AppLanguage
+import com.rudra.hisab.util.LocalAppLanguage
+import com.rudra.hisab.util.LocalStrings
+import com.rudra.hisab.util.createStrings
 import com.rudra.hisab.ui.screens.accounting.AccountingScreen
 import com.rudra.hisab.ui.screens.accounting.AccountingViewModel
 import com.rudra.hisab.ui.screens.analytics.AnalyticsScreen
@@ -88,10 +93,15 @@ class MainActivity : FragmentActivity() {
             val context = LocalContext.current
             val backgroundTime = remember { mutableLongStateOf(0L) }
 
-            LaunchedEffect(settings?.isBangla) {
+            val appLanguage = remember(settings?.languageCode) {
+                AppLanguage.fromCode(settings?.languageCode ?: "bn")
+            }
+            val currentStrings = remember(appLanguage) { createStrings(appLanguage) }
+
+            LaunchedEffect(settings?.languageCode) {
                 if (settings != null) {
                     AppCompatDelegate.setApplicationLocales(
-                        LocaleListCompat.forLanguageTags(if (settings!!.isBangla) "bn" else "en")
+                        LocaleListCompat.forLanguageTags(settings!!.languageCode)
                     )
                 }
             }
@@ -119,6 +129,10 @@ class MainActivity : FragmentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     if (settings != null) {
+                        CompositionLocalProvider(
+                            LocalAppLanguage provides appLanguage,
+                            LocalStrings provides currentStrings
+                        ) {
                         val navController = rememberNavController()
                         val navBackStackEntry by navController.currentBackStackEntryAsState()
                         val currentRoute = navBackStackEntry?.destination?.route
@@ -136,7 +150,6 @@ class MainActivity : FragmentActivity() {
                                         currentRoute = currentRoute,
                                         navOrder = settings!!.navOrder,
                                         isFabMode = isFabMode,
-                                        isBangla = settings!!.isBangla,
                                         onNavigate = { route ->
                                             navController.navigate(route) {
                                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -394,6 +407,7 @@ class MainActivity : FragmentActivity() {
                                     )
                                 }
                             }
+                        }
                         }
                     }
                 }

@@ -45,6 +45,7 @@ import com.rudra.hisab.data.local.entity.ExpenseEntity
 import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.CurrencyFormatter
+import com.rudra.hisab.util.LocalStrings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -56,6 +57,7 @@ fun ExpenseScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val isBangla = state.isBangla
+    val strings = LocalStrings.current
 
     Column(
         modifier = Modifier
@@ -68,12 +70,12 @@ fun ExpenseScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = if (isBangla) "খরচ" else "Expenses",
+                text = strings.expenses,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
             IconButton(onClick = { viewModel.showAddDialog() }) {
-                Icon(Icons.Default.Add, contentDescription = if (isBangla) "খরচ যোগ" else "Add Expense", tint = RedExpense)
+                Icon(Icons.Default.Add, contentDescription = strings.addExpense, tint = RedExpense)
             }
         }
 
@@ -90,10 +92,10 @@ fun ExpenseScreen(
                     label = {
                         Text(
                             when (filter) {
-                                ExpenseFilter.ALL -> if (isBangla) "সব" else "All"
-                                ExpenseFilter.TODAY -> if (isBangla) "আজ" else "Today"
-                                ExpenseFilter.WEEK -> if (isBangla) "সপ্তাহ" else "Week"
-                                ExpenseFilter.MONTH -> if (isBangla) "মাস" else "Month"
+                                ExpenseFilter.ALL -> strings.all
+                                ExpenseFilter.TODAY -> strings.today
+                                ExpenseFilter.WEEK -> strings.week
+                                ExpenseFilter.MONTH -> strings.month
                             }
                         )
                     },
@@ -107,7 +109,7 @@ fun ExpenseScreen(
         Spacer(modifier = Modifier.height(4.dp))
 
         Text(
-            text = "${if (isBangla) "মোট" else "Total"}: ${CurrencyFormatter.format(state.totalForPeriod)}",
+            text = "${strings.totalExpensesLabel}: ${CurrencyFormatter.format(state.totalForPeriod)}",
             style = MaterialTheme.typography.titleLarge,
             color = RedExpense,
             fontWeight = FontWeight.Bold
@@ -117,7 +119,7 @@ fun ExpenseScreen(
 
         if (state.expenses.isEmpty()) {
             Text(
-                text = if (isBangla) "কোনো খরচ নেই" else "No expenses",
+                text = strings.noExpenses,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -151,7 +153,7 @@ fun ExpenseScreen(
             containerColor = MaterialTheme.colorScheme.inverseSurface,
             action = {
                 TextButton(onClick = { viewModel.undoDelete() }) {
-                    Text(if (isBangla) "পূর্বাবস্থায় আনুন" else "Undo", color = GreenProfit)
+                    Text(strings.undo, color = GreenProfit)
                 }
             }
         ) {

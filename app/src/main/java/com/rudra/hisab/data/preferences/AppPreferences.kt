@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -15,7 +16,7 @@ import javax.inject.Singleton
 private val Context.dataStore by preferencesDataStore(name = "hisab_preferences")
 
 data class AppSettings(
-    val isBangla: Boolean = true,
+    val languageCode: String = "bn",
     val shopName: String = "",
     val shopCategory: String = "",
     val hasCompletedOnboarding: Boolean = false,
@@ -47,7 +48,7 @@ class AppPreferences @Inject constructor(
 ) {
 
     private object Keys {
-        val IS_BANGLA = booleanPreferencesKey("is_bangla")
+        val LANGUAGE_CODE = stringPreferencesKey("language_code")
         val SHOP_NAME = stringPreferencesKey("shop_name")
         val SHOP_CATEGORY = stringPreferencesKey("shop_category")
         val HAS_COMPLETED_ONBOARDING = booleanPreferencesKey("has_completed_onboarding")
@@ -75,7 +76,7 @@ class AppPreferences @Inject constructor(
 
     val settings: Flow<AppSettings> = context.dataStore.data.map { prefs ->
         AppSettings(
-            isBangla = prefs[Keys.IS_BANGLA] ?: true,
+            languageCode = prefs[Keys.LANGUAGE_CODE] ?: "bn",
             shopName = prefs[Keys.SHOP_NAME] ?: "",
             shopCategory = prefs[Keys.SHOP_CATEGORY] ?: "",
             hasCompletedOnboarding = prefs[Keys.HAS_COMPLETED_ONBOARDING] ?: false,
@@ -102,8 +103,8 @@ class AppPreferences @Inject constructor(
         )
     }
 
-    suspend fun setBangla(isBangla: Boolean) {
-        context.dataStore.edit { it[Keys.IS_BANGLA] = isBangla }
+    suspend fun setLanguageCode(code: String) {
+        context.dataStore.edit { it[Keys.LANGUAGE_CODE] = code }
     }
 
     suspend fun setShopName(name: String) {

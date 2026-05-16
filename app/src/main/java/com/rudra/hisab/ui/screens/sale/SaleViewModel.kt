@@ -35,7 +35,7 @@ data class SaleState(
     val searchQuery: String = "",
     val todaySalesTotal: Double = 0.0,
     val todaySaleCount: Int = 0,
-    val isBangla: Boolean = true
+    val languageCode: String = "bn"
 )
 
 @HiltViewModel
@@ -75,12 +75,12 @@ class SaleViewModel @Inject constructor(
         }
     }
 
-    private fun loadSettings() {
-        viewModelScope.launch {
-            val settings = appPreferences.settings.first()
-            _state.value = _state.value.copy(isBangla = settings.isBangla)
-        }
-    }
+     private fun loadSettings() {
+         viewModelScope.launch {
+             val settings = appPreferences.settings.first()
+             _state.value = _state.value.copy(languageCode = settings.languageCode)
+         }
+     }
 
     fun selectProduct(product: ProductEntity) {
         _state.value = _state.value.copy(

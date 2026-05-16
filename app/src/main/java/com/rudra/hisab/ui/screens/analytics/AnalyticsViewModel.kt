@@ -66,7 +66,7 @@ class AnalyticsViewModel @Inject constructor(
     private fun loadAnalytics() {
         viewModelScope.launch {
             val settings = appPreferences.settings.first()
-            _state.value = _state.value.copy(isLoading = true, isBangla = settings.isBangla)
+            _state.value = _state.value.copy(isLoading = true, isBangla = settings.languageCode == "bn")
 
             val now = LocalDate.now()
             val sevenDaysAgo = now.minusDays(7).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()

@@ -67,7 +67,7 @@ class AccountingViewModel @Inject constructor(
     private fun loadSettings() {
         viewModelScope.launch {
             val settings = appPreferences.settings.first()
-            _uiState.value = _uiState.value.copy(isBangla = settings.isBangla)
+            _uiState.value = _uiState.value.copy(isBangla = settings.languageCode == "bn")
         }
     }
 

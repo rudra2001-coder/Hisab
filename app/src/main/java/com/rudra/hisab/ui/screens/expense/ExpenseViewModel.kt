@@ -61,7 +61,7 @@ class ExpenseViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             appPreferences.settings.collect { settings ->
-                _state.value = _state.value.copy(isBangla = settings.isBangla)
+                _state.value = _state.value.copy(isBangla = settings.languageCode == "bn")
             }
         }
         setFilter(ExpenseFilter.TODAY)

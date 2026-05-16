@@ -65,6 +65,7 @@ import com.rudra.hisab.ui.theme.OrangeDue
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.BanglaNumberConverter
 import com.rudra.hisab.util.CurrencyFormatter
+import com.rudra.hisab.util.LocalStrings
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,6 +78,7 @@ fun InventoryScreen(
     val scope = rememberCoroutineScope()
     var showUndoSnackbar by remember { mutableStateOf(false) }
     val isBangla = state.isBangla
+    val strings = LocalStrings.current
 
     val deletedProduct = state.deletedProduct
     LaunchedEffect(deletedProduct) {
@@ -84,9 +86,8 @@ fun InventoryScreen(
             showUndoSnackbar = true
             scope.launch {
                 snackbarHostState.showSnackbar(
-                    message = if (isBangla) "${deletedProduct.nameBangla} মুছে ফেলা হয়েছে"
-                    else "${deletedProduct.nameBangla} deleted",
-                    actionLabel = if (isBangla) "পূর্বাবস্থায় আনুন" else "Undo"
+                    message = strings.productDeleted(deletedProduct.nameBangla),
+                    actionLabel = strings.undo
                 )
                 showUndoSnackbar = false
             }

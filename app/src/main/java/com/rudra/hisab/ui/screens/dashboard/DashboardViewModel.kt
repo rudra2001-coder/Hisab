@@ -50,7 +50,7 @@ data class DashboardState(
     val quickActions: List<String> = listOf("sale", "stock", "expense", "customer"),
     val isLoading: Boolean = true,
     val dateLabel: String = "",
-    val isBangla: Boolean = true,
+    val languageCode: String = "bn",
     val showFabMenu: Boolean = false,
     val showQuickSaleDialog: Boolean = false,
     val showQuickExpenseDialog: Boolean = false,
@@ -98,21 +98,22 @@ class DashboardViewModel @Inject constructor(
         val startOfDay = now.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val endOfDay = now.atTime(LocalTime.MAX).atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
 
-        viewModelScope.launch {
-            appPreferences.settings.collect { settings ->
-                val formatter = DateTimeFormatter.ofPattern(
-                    if (settings.isBangla) "EEEE, dd MMMM yyyy" else "EEEE, MMMM dd, yyyy",
-                    if (settings.isBangla) Locale.forLanguageTag("bn") else Locale.ENGLISH
-                )
-                val actions = settings.quickActions.split(",").map { it.trim() }
-                _state.value = _state.value.copy(
-                    shopName = settings.shopName,
-                    quickActions = actions,
-                    isBangla = settings.isBangla,
-                    dateLabel = now.format(formatter)
-                )
-            }
-        }
+         viewModelScope.launch {
+             appPreferences.settings.collect { settings ->
+                 val isBn = settings.languageCode == "bn"
+                 val formatter = DateTimeFormatter.ofPattern(
+                     if (isBn) "EEEE, dd MMMM yyyy" else "EEEE, MMMM dd, yyyy",
+                     if (isBn) Locale.forLanguageTag("bn") else Locale.ENGLISH
+                 )
+                 val actions = settings.quickActions.split(",").map { it.trim() }
+                 _state.value = _state.value.copy(
+                     shopName = settings.shopName,
+                     quickActions = actions,
+                     languageCode = settings.languageCode,
+                     dateLabel = now.format(formatter)
+                 )
+             }
+         }
 
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)

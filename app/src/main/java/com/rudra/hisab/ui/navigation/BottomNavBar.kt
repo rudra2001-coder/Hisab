@@ -13,11 +13,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.rudra.hisab.data.preferences.AppPreferences
+import com.rudra.hisab.util.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 
 data class NavItem(
@@ -45,15 +45,23 @@ fun BottomNavBar(
     currentRoute: String?,
     navOrder: String = "dashboard,inventory,sale,customers,more",
     isFabMode: Boolean = false,
-    isBangla: Boolean = true,
     onNavigate: (String) -> Unit,
 ) {
+    val strings = LocalStrings.current
     val items = remember(navOrder) { getOrderedNavItems(navOrder) }
 
     NavigationBar(
         containerColor = MaterialTheme.colorScheme.surface
     ) {
         items.forEach { item ->
+            val label = when (item.route) {
+                Routes.DASHBOARD -> strings.navDashboard
+                Routes.INVENTORY -> strings.navStock
+                Routes.SALE -> strings.navSale
+                Routes.CUSTOMERS -> strings.navCustomers
+                Routes.MORE -> strings.navMore
+                else -> item.route
+            }
             val selected = currentRoute == item.route
             NavigationBarItem(
                 selected = selected,
@@ -61,12 +69,12 @@ fun BottomNavBar(
                 icon = {
                     Icon(
                         imageVector = item.icon,
-                        contentDescription = if (isBangla) item.labelBn else item.labelEn
+                        contentDescription = label
                     )
                 },
                 label = {
                     Text(
-                        if (isBangla) item.labelBn else item.labelEn,
+                        label,
                         style = MaterialTheme.typography.labelSmall
                     )
                 },

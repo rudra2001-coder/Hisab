@@ -62,6 +62,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.RedExpense
+import com.rudra.hisab.util.LocalStrings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -72,7 +73,7 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val context = LocalContext.current
-    val isBangla = state.settings.isBangla
+    val isBangla = state.settings.languageCode == "bn"
 
     Column(
         modifier = Modifier
@@ -92,10 +93,10 @@ fun SettingsScreen(
             SettingsRow(
                 icon = Icons.Default.Language,
                 title = if (isBangla) "ভাষা" else "Language",
-                subtitle = if (state.settings.isBangla) "বাংলা" else "English",
+                subtitle = if (state.settings.languageCode == "bn") "বাংলা" else "English",
                 trailing = {
                     Switch(
-                        checked = state.settings.isBangla,
+                        checked = state.settings.languageCode == "bn",
                         onCheckedChange = { viewModel.toggleLanguage() }
                     )
                 }

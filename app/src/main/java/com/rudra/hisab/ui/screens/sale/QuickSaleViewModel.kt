@@ -134,7 +134,7 @@ class QuickSaleViewModel @Inject constructor(
                     todayTransactions = transactions,
                     todayProducts = productMap,
                     cartMode = settings.cartModeEnabled,
-                    isBangla = settings.isBangla
+                    isBangla = settings.languageCode == "bn"
                 )
             }
         }

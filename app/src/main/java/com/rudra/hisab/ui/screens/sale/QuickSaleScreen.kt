@@ -94,6 +94,7 @@ import com.rudra.hisab.ui.theme.OrangeDue
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.BanglaNumberConverter
 import com.rudra.hisab.util.CurrencyFormatter
+import com.rudra.hisab.util.LocalStrings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -103,11 +104,12 @@ fun QuickSaleScreen(
     viewModel: QuickSaleViewModel
 ) {
     val state by viewModel.state.collectAsState()
+    val strings = LocalStrings.current
+
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showCartSheet by remember { mutableStateOf(false) }
-    val isBangla = state.isBangla
 
     val filteredProducts by remember(state.products, state.searchQuery) {
         derivedStateOf {
@@ -131,7 +133,7 @@ fun QuickSaleScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (isBangla) "দ্রুত বিক্রয়" else "Quick Sale",
+                    text = strings.quickSaleTitle,
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -140,7 +142,7 @@ fun QuickSaleScreen(
                         Box {
                             Icon(
                                 Icons.Default.ShoppingCart,
-                                contentDescription = if (isBangla) "কার্ট" else "Cart",
+                                contentDescription = strings.cart,
                                 tint = if (state.cartCount > 0) GreenProfit else MaterialTheme.colorScheme.onSurface
                             )
                             if (state.cartCount > 0) {
@@ -164,7 +166,7 @@ fun QuickSaleScreen(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = viewModel::setSearchQuery,
-                placeholder = { Text(if (isBangla) "পণ্য খুঁজুন" else "Search product") },
+                placeholder = { Text(strings.searchProducts) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -180,10 +182,8 @@ fun QuickSaleScreen(
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text(
-                            text = if (state.products.isEmpty())
-                                (if (isBangla) "প্রথমে পণ্য যোগ করুন" else "Add products first")
-                            else
-                                (if (isBangla) "কোনো পণ্য পাওয়া যায়নি" else "No products found"),
+                            text = if (state.products.isEmpty()) strings.addProductsFirst
+                            else strings.noProductsFound,
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -200,7 +200,7 @@ fun QuickSaleScreen(
                         if (state.cartMode) {
                             CartProductTile(
                                 product = product,
-                                isBangla = isBangla,
+                                isBangla = state.isBangla,
                                 isInCart = state.isInCart(product.id),
                                 cartQty = state.getCartItem(product.id)?.quantity ?: 0.0,
                                 onClick = { viewModel.selectProduct(product) }
@@ -208,7 +208,8 @@ fun QuickSaleScreen(
                         } else {
                             ProductTile(
                                 product = product,
-                                isBangla = isBangla,
+                                isInCart = state.isInCart(product.id),
+                                cartQty = state.getCartItem(product.id)?.quantity ?: 0.0,
                                 onClick = { viewModel.selectProduct(product) }
                             )
                         }
@@ -217,20 +218,19 @@ fun QuickSaleScreen(
             }
         }
 
-        if (state.saleComplete) {
-            SaleSuccessOverlay(
-                isBangla = isBangla,
-                onDismiss = {
-                    val amount = state.totalPrice
-                    viewModel.resetAfterSale()
-                    scope.launch {
-                        snackbarHostState.showSnackbar(
-                            "${if (isBangla) "বিক্রয় সফল হয়েছে" else "Sale successful"} — ${CurrencyFormatter.format(amount)}"
-                        )
-                    }
+        SaleSuccessOverlay(
+            visible = state.saleComplete,
+            isBangla = state.isBangla,
+            onDismiss = {
+                val amount = state.totalPrice
+                viewModel.resetAfterSale()
+                scope.launch {
+                    snackbarHostState.showSnackbar(
+                        "${strings.saleSuccessful} — ${CurrencyFormatter.format(amount)}"
+                    )
                 }
-            )
-        }
+            }
+        )
 
         SnackbarHost(
             hostState = snackbarHostState,
@@ -247,7 +247,7 @@ fun QuickSaleScreen(
         ) {
             SaleBottomSheetContent(
                 state = state,
-                isBangla = isBangla,
+                isBangla = state.isBangla,
                 onQuantityChange = viewModel::setQuantityDirect,
                 onPaymentTypeChange = viewModel::setPaymentType,
                 onPaidAmountChange = viewModel::setPaidAmount,
@@ -269,7 +269,7 @@ fun QuickSaleScreen(
         ) {
             CartBottomSheetContent(
                 state = state,
-                isBangla = isBangla,
+                isBangla = state.isBangla,
                 onUpdateQuantity = viewModel::updateCartItemQuantity,
                 onRemoveItem = viewModel::removeCartItem,
                 onClearCart = viewModel::clearCart,
@@ -299,6 +299,7 @@ private fun SaleBottomSheetContent(
     onConfirm: () -> Unit,
     onShowHistory: () -> Unit
 ) {
+    val strings = LocalStrings.current
     val product = state.selectedProduct ?: return
     var tabIndex by remember { mutableIntStateOf(0) }
 
@@ -328,7 +329,7 @@ private fun SaleBottomSheetContent(
                 onClick = { tabIndex = 0 },
                 text = {
                     Text(
-                        if (isBangla) "বিক্রয়" else "Sale",
+                        strings.qaSale,
                         fontWeight = if (tabIndex == 0) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -338,7 +339,7 @@ private fun SaleBottomSheetContent(
                 onClick = { tabIndex = 1 },
                 text = {
                     Text(
-                        if (isBangla) "ইতিহাস" else "History",
+                        strings.history,
                         fontWeight = if (tabIndex == 1) FontWeight.Bold else FontWeight.Normal
                     )
                 }
@@ -382,6 +383,7 @@ private fun SaleTabContent(
     onCreateCustomer: (String, String) -> Unit,
     onConfirm: () -> Unit
 ) {
+    val strings = LocalStrings.current
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -390,13 +392,13 @@ private fun SaleTabContent(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = product.nameBangla,
+                text = strings.nameOrBangla(product.name, product.nameBangla),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
             Text(
-                text = "${if (isBangla) "দাম" else "Price"}: ${CurrencyFormatter.format(product.sellPrice)} / ${unitToText(product.unit, isBangla)}",
+                text = "${strings.price}: ${CurrencyFormatter.format(product.sellPrice)} / ${strings.unitText(product.unit)}",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -416,7 +418,7 @@ private fun SaleTabContent(
 
     if (state.quantityDouble > product.currentStock) {
         Text(
-            text = "${if (isBangla) "সর্বোচ্চ" else "Max"} ${product.currentStock.toInt()} ${unitToText(product.unit, isBangla)} ${if (isBangla) "বিক্রি করতে পারবেন" else "available"}",
+            text = "${strings.max} ${product.currentStock.toInt()} ${strings.unitText(product.unit)} ${strings.available}",
             color = RedExpense,
             style = MaterialTheme.typography.bodySmall,
             modifier = Modifier.padding(top = 4.dp, start = 8.dp)
@@ -436,7 +438,7 @@ private fun SaleTabContent(
         OutlinedTextField(
             value = state.paidAmount,
             onValueChange = onPaidAmountChange,
-            label = { Text(if (isBangla) "প্রাপ্ত টাকা" else "Received Amount") },
+            label = { Text(strings.receivedAmount) },
             modifier = Modifier.fillMaxWidth(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             singleLine = true,
@@ -478,14 +480,14 @@ private fun SaleTabContent(
             )
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                if (isBangla) "হিসাব করা হচ্ছে..." else "Processing...",
+                strings.processing,
                 style = MaterialTheme.typography.titleMedium
             )
         } else {
             Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(24.dp))
             Spacer(modifier = Modifier.width(12.dp))
             Text(
-                if (isBangla) "বিক্রয় নিশ্চিত করুন" else "Confirm Sale",
+                strings.confirmSaleShort,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -496,9 +498,11 @@ private fun SaleTabContent(
 @Composable
 private fun ProductTile(
     product: ProductEntity,
-    isBangla: Boolean,
+    isInCart: Boolean,
+    cartQty: Double,
     onClick: () -> Unit
 ) {
+    val strings = LocalStrings.current
     val outOfStock = product.currentStock <= 0
     val lowStock = !outOfStock && product.currentStock <= product.lowStockThreshold
     val stockRatio = if (product.currentStock > 0 && product.lowStockThreshold > 0)
@@ -530,7 +534,7 @@ private fun ProductTile(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = product.nameBangla,
+                text = strings.nameOrBangla(product.name, product.nameBangla),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
@@ -554,7 +558,7 @@ private fun ProductTile(
                     trackColor = stockColor.copy(alpha = 0.2f),
                 )
                 Text(
-                    text = "${if (isBangla) "স্টক" else "Stock"}: ${BanglaNumberConverter.toBangla(product.currentStock.toInt())}",
+                    text = "${strings.stockLabel}: ${BanglaNumberConverter.toBangla(product.currentStock.toInt())}",
                     style = MaterialTheme.typography.bodySmall,
                     color = stockColor
                 )
@@ -571,6 +575,7 @@ private fun CartProductTile(
     cartQty: Double,
     onClick: () -> Unit
 ) {
+    val strings = LocalStrings.current
     val outOfStock = product.currentStock <= 0
     val containerColor = if (isInCart) GreenProfitContainer.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceVariant
 
@@ -585,7 +590,7 @@ private fun CartProductTile(
     ) {
         Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
             Column {
-                Text(product.nameBangla, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(strings.nameOrBangla(product.name, product.nameBangla), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1)
                 Text(CurrencyFormatter.format(product.sellPrice), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = GreenProfit)
             }
             if (isInCart) {
@@ -603,17 +608,18 @@ private fun HistoryTabContent(
     productMap: Map<Long, ProductEntity>,
     isBangla: Boolean
 ) {
+    val strings = LocalStrings.current
     if (transactions.isEmpty()) {
         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
             Text(
-                if (isBangla) "আজকের কোনো বিক্রয় নেই" else "No sales today",
+                strings.noSalesToday,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     } else {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             transactions.forEach { t ->
-                val pName = productMap[t.productId]?.nameBangla ?: "Product"
+                val pName = productMap[t.productId]?.let { strings.nameOrBangla(it.name, it.nameBangla) } ?: "Product"
                 Card(
                     modifier = Modifier
                         .fillMaxWidth(),
@@ -623,7 +629,7 @@ private fun HistoryTabContent(
                     Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(pName, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
-                            Text("${BanglaNumberConverter.toBangla(t.quantity)} ${if (isBangla) "পিস" else "pcs"}", style = MaterialTheme.typography.bodySmall)
+                            Text("${BanglaNumberConverter.toBangla(t.quantity)} ${strings.pcs}", style = MaterialTheme.typography.bodySmall)
                         }
                         Text(CurrencyFormatter.format(t.totalAmount), fontWeight = FontWeight.Bold, color = GreenProfit)
                     }
@@ -648,6 +654,7 @@ private fun CartBottomSheetContent(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
+    val strings = LocalStrings.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -661,7 +668,7 @@ private fun CartBottomSheetContent(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "${if (isBangla) "কার্ট" else "Cart"} (${state.cartCount})",
+                "${strings.cartTitle} (${state.cartCount})",
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -683,7 +690,7 @@ private fun CartBottomSheetContent(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "${if (isBangla) "মোট" else "Total"}:",
+                    "${strings.total}:",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold
                 )
@@ -706,7 +713,7 @@ private fun CartBottomSheetContent(
             colors = ButtonDefaults.buttonColors(containerColor = GreenProfit),
             shape = RoundedCornerShape(16.dp)
         ) {
-            Text(if (isBangla) "বিক্রয় নিশ্চিত করুন" else "Confirm Sale")
+            Text(strings.confirmSaleShort)
         }
     }
 }
@@ -718,6 +725,7 @@ private fun CartItemRow(
     onUpdateQuantity: (Long, Double) -> Unit,
     onRemove: () -> Unit
 ) {
+    val strings = LocalStrings.current
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -725,7 +733,7 @@ private fun CartItemRow(
     ) {
         Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(item.product.nameBangla, fontWeight = FontWeight.Bold)
+                Text(strings.nameOrBangla(item.product.name, item.product.nameBangla), fontWeight = FontWeight.Bold)
                 Text(CurrencyFormatter.format(item.product.sellPrice))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -750,6 +758,7 @@ private fun InteractiveQuantityCard(
     totalPrice: Double,
     profit: Double
 ) {
+    val strings = LocalStrings.current
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -774,7 +783,7 @@ private fun InteractiveQuantityCard(
                         .padding(horizontal = 8.dp)
                 )
                 Text(
-                    unitToText(unit, isBangla),
+                    strings.unitText(unit),
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -783,7 +792,7 @@ private fun InteractiveQuantityCard(
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        if (isBangla) "মোট টাকা" else "Total",
+                        strings.total,
                         style = MaterialTheme.typography.labelMedium
                     )
                     Text(
@@ -796,7 +805,7 @@ private fun InteractiveQuantityCard(
                 VerticalDivider(Modifier.height(40.dp))
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        if (isBangla) "সম্ভাব্য লাভ" else "Est. Profit",
+                        strings.estProfit,
                         style = MaterialTheme.typography.labelMedium
                     )
                     Text(
@@ -817,15 +826,16 @@ private fun PaymentTypeSelector(
     isBangla: Boolean,
     onChange: (SalePaymentType) -> Unit
 ) {
+    val strings = LocalStrings.current
     Column {
         Text(
-            if (isBangla) "পরিশোধের ধরন" else "Payment Type",
+            strings.paymentType,
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             PaymentTypeButton(
-                if (isBangla) "নগদ" else "Cash",
+                strings.cash,
                 selected == SalePaymentType.CASH,
                 GreenProfit,
                 GreenProfitContainer,
@@ -833,7 +843,7 @@ private fun PaymentTypeSelector(
                 Modifier.weight(1f)
             )
             PaymentTypeButton(
-                if (isBangla) "বাকি" else "Credit",
+                strings.credit,
                 selected == SalePaymentType.CREDIT,
                 OrangeDue,
                 OrangeDue.copy(alpha = 0.1f),
@@ -841,7 +851,7 @@ private fun PaymentTypeSelector(
                 Modifier.weight(1f)
             )
             PaymentTypeButton(
-                if (isBangla) "আংশিক" else "Partial",
+                strings.partial,
                 selected == SalePaymentType.PARTIAL,
                 BlueInfo,
                 BlueInfoContainer,
@@ -885,13 +895,14 @@ private fun CustomerSelector(
     onSelect: (CustomerEntity?) -> Unit,
     onCreateCustomer: (String, String) -> Unit
 ) {
+    val strings = LocalStrings.current
     var showCreateDialog by remember { mutableStateOf(false) }
     var customerName by remember { mutableStateOf("") }
     var customerPhone by remember { mutableStateOf("") }
 
     Column {
         Text(
-            if (isBangla) "গ্রাহক" else "Customer",
+            strings.customerLabel,
             fontWeight = FontWeight.Bold
         )
         if (selectedCustomer != null) {
@@ -919,7 +930,7 @@ private fun CustomerSelector(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchChange,
-                placeholder = { Text(if (isBangla) "গ্রাহক খুঁজুন" else "Search customer") },
+                placeholder = { Text(strings.searchCustomer) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp)
@@ -932,7 +943,7 @@ private fun CustomerSelector(
                 Column {
                     TextButton(onClick = { showCreateDialog = true }, modifier = Modifier.fillMaxWidth()) {
                         Icon(Icons.Default.Add, null)
-                        Text(if (isBangla) "নতুন গ্রাহক" else "New Customer")
+                        Text(strings.newCustomer)
                     }
                     customers.take(3).forEach { c ->
                         HorizontalDivider(thickness = 0.5.dp)
@@ -952,20 +963,20 @@ private fun CustomerSelector(
     if (showCreateDialog) {
         AlertDialog(
             onDismissRequest = { showCreateDialog = false },
-            title = { Text(if (isBangla) "নতুন গ্রাহক" else "New Customer") },
+            title = { Text(strings.newCustomer) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = customerName,
                         onValueChange = { customerName = it },
-                        label = { Text(if (isBangla) "নাম" else "Name") },
+                        label = { Text(strings.name) },
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
                     )
                     OutlinedTextField(
                         value = customerPhone,
                         onValueChange = { customerPhone = it },
-                        label = { Text(if (isBangla) "ফোন নম্বর" else "Phone") },
+                        label = { Text(strings.phoneNumber) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         shape = RoundedCornerShape(12.dp)
@@ -978,11 +989,11 @@ private fun CustomerSelector(
                         onCreateCustomer(customerName, customerPhone)
                         showCreateDialog = false
                     }
-                ) { Text(if (isBangla) "যোগ করুন" else "Add") }
+                ) { Text(strings.add) }
             },
             dismissButton = {
                 TextButton(onClick = { showCreateDialog = false }) {
-                    Text(if (isBangla) "বাতিল" else "Cancel")
+                    Text(strings.cancel)
                 }
             }
         )
@@ -990,7 +1001,9 @@ private fun CustomerSelector(
 }
 
 @Composable
-private fun SaleSuccessOverlay(isBangla: Boolean, onDismiss: () -> Unit) {
+private fun SaleSuccessOverlay(visible: Boolean, isBangla: Boolean, onDismiss: () -> Unit) {
+    if (!visible) return
+    val strings = LocalStrings.current
     LaunchedEffect(Unit) { delay(1500); onDismiss() }
     Box(
         Modifier
@@ -1016,7 +1029,7 @@ private fun SaleSuccessOverlay(isBangla: Boolean, onDismiss: () -> Unit) {
                     modifier = Modifier.size(64.dp)
                 )
                 Text(
-                    if (isBangla) "বিক্রয় সফল!" else "Sale Complete!",
+                    strings.saleComplete,
                     style = MaterialTheme.typography.titleLarge,
                     color = GreenProfit,
                     fontWeight = FontWeight.Bold
@@ -1026,27 +1039,3 @@ private fun SaleSuccessOverlay(isBangla: Boolean, onDismiss: () -> Unit) {
     }
 }
 
-private fun unitToText(unit: String, isBangla: Boolean): String {
-    if (!isBangla) {
-        return when (unit.lowercase()) {
-            "kg" -> "kg"
-            "piece", "pcs" -> "pcs"
-            "litre", "l", "liter" -> "L"
-            "mon" -> "mon"
-            "dozen" -> "dozen"
-            "gram", "g" -> "g"
-            "ton" -> "ton"
-            else -> unit
-        }
-    }
-    return when (unit.lowercase()) {
-        "kg" -> "কেজি"
-        "piece", "pcs" -> "পিস"
-        "litre", "l", "liter" -> "লিটার"
-        "mon" -> "মণ"
-        "dozen" -> "ডজন"
-        "gram", "g" -> "গ্রাম"
-        "ton" -> "টন"
-        else -> unit
-    }
-}

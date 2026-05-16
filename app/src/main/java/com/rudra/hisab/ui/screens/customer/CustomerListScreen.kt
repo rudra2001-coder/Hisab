@@ -52,6 +52,7 @@ import com.rudra.hisab.ui.theme.GreenProfit
 import com.rudra.hisab.ui.theme.OrangeDue
 import com.rudra.hisab.ui.theme.RedExpense
 import com.rudra.hisab.util.CurrencyFormatter
+import com.rudra.hisab.util.LocalStrings
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -67,6 +68,7 @@ fun CustomerListScreen(
     }
     var customerToDelete by remember { mutableStateOf<CustomerEntity?>(null) }
     val isBangla = true
+    val strings = LocalStrings.current
 
     Scaffold(
         floatingActionButton = {
@@ -74,7 +76,7 @@ fun CustomerListScreen(
                 onClick = { viewModel.showAddCustomerDialog() },
                 containerColor = MaterialTheme.colorScheme.primary
             ) {
-                Icon(Icons.Default.Add, contentDescription = if (isBangla) "গ্রাহক যোগ" else "Add Customer")
+                Icon(Icons.Default.Add, contentDescription = strings.addCustomer)
             }
         }
     ) { padding ->
@@ -85,7 +87,7 @@ fun CustomerListScreen(
                 .padding(16.dp)
         ) {
             Text(
-                text = if (isBangla) "গ্রাহক" else "Customers",
+                text = strings.customerTitle,
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -103,7 +105,7 @@ fun CustomerListScreen(
                     colors = CardDefaults.cardColors(containerColor = BlueInfo.copy(alpha = 0.08f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text(if (isBangla) "মোট" else "Total", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.totalLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(state.customers.size.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = BlueInfo)
                     }
                 }
@@ -114,7 +116,7 @@ fun CustomerListScreen(
                     colors = CardDefaults.cardColors(containerColor = OrangeDue.copy(alpha = 0.08f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text(if (isBangla) "বাকি" else "Due", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.due, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(CurrencyFormatter.format(state.totalDues), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = OrangeDue)
                     }
                 }
@@ -126,7 +128,7 @@ fun CustomerListScreen(
                     colors = CardDefaults.cardColors(containerColor = GreenProfit.copy(alpha = 0.08f))
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        Text(if (isBangla) "পরিশোধিত" else "Paid", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.paid, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(paidCount.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = GreenProfit)
                     }
                 }
@@ -137,7 +139,7 @@ fun CustomerListScreen(
             OutlinedTextField(
                 value = state.searchQuery,
                 onValueChange = viewModel::setSearchQuery,
-                placeholder = { Text(if (isBangla) "গ্রাহক খুঁজুন" else "Search customer") },
+                placeholder = { Text(strings.searchCustomer) },
                 leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -152,10 +154,7 @@ fun CustomerListScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (state.customers.isEmpty())
-                            (if (isBangla) "কোনো গ্রাহক নেই — বাকি বিক্রয় গ্রাহক যোগ করবে" else "No customers yet — Credit sales will add customers")
-                        else
-                            (if (isBangla) "কোনো গ্রাহক পাওয়া যায়নি" else "No customers found"),
+                        text = if (state.customers.isEmpty()) strings.noCustomersYet else strings.noCustomersFound,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.Center
@@ -180,8 +179,8 @@ fun CustomerListScreen(
         if (c.totalDue > 0) {
             AlertDialog(
                 onDismissRequest = { customerToDelete = null },
-                title = { Text(if (isBangla) "মুছা যাবে না" else "Cannot Delete") },
-                text = { Text("${if (isBangla) "এই গ্রাহকের" else "This customer has"} ${CurrencyFormatter.format(c.totalDue)} ${if (isBangla) "বাকি আছে। আগে পেমেন্ট নিন।" else "due. Please receive payment first."}") },
+                title = { Text(strings.cannotDelete) },
+                text = { Text(strings.customerDeleteDue(CurrencyFormatter.format(c.totalDue))) },
                 confirmButton = {
                     TextButton(onClick = { customerToDelete = null }) { Text("OK") }
                 }
@@ -189,16 +188,16 @@ fun CustomerListScreen(
         } else {
             AlertDialog(
                 onDismissRequest = { customerToDelete = null },
-                title = { Text(if (isBangla) "গ্রাহক মুছুন" else "Delete Customer") },
-                text = { Text("${if (isBangla) "আপনি কি ${c.name} কে মুছে ফেলতে চান?" else "Are you sure you want to delete ${c.name}?"} ") },
+                title = { Text(strings.deleteCustomer) },
+                text = { Text(strings.confirmDeleteCustomer(c.name)) },
                 confirmButton = {
                     Button(onClick = {
                         viewModel.deleteCustomer(c)
                         customerToDelete = null
-                    }) { Text(if (isBangla) "মুছুন" else "Delete") }
+                    }) { Text(strings.delete) }
                 },
                 dismissButton = {
-                    TextButton(onClick = { customerToDelete = null }) { Text(if (isBangla) "বাতিল" else "Cancel") }
+                    TextButton(onClick = { customerToDelete = null }) { Text(strings.cancel) }
                 }
             )
         }
@@ -207,13 +206,13 @@ fun CustomerListScreen(
     if (state.showAddDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.hideAddCustomerDialog() },
-            title = { Text(if (isBangla) "নতুন গ্রাহক" else "New Customer") },
+            title = { Text(strings.newCustomer) },
             text = {
                 Column {
                     OutlinedTextField(
                         value = state.newCustomerName,
                         onValueChange = viewModel::setNewCustomerName,
-                        label = { Text(if (isBangla) "নাম" else "Name") },
+                        label = { Text(strings.name) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
@@ -222,7 +221,7 @@ fun CustomerListScreen(
                     OutlinedTextField(
                         value = state.newCustomerPhone,
                         onValueChange = viewModel::setNewCustomerPhone,
-                        label = { Text(if (isBangla) "ফোন" else "Phone") },
+                        label = { Text(strings.phone) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
@@ -240,7 +239,7 @@ fun CustomerListScreen(
                     OutlinedTextField(
                         value = state.newCustomerAddress,
                         onValueChange = viewModel::setNewCustomerAddress,
-                        label = { Text(if (isBangla) "ঠিকানা" else "Address") },
+                        label = { Text(strings.address) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         shape = RoundedCornerShape(12.dp)
@@ -251,10 +250,10 @@ fun CustomerListScreen(
                 Button(
                     onClick = { viewModel.addCustomer() },
                     enabled = state.newCustomerName.isNotBlank()
-                ) { Text(if (isBangla) "যোগ করুন" else "Add") }
+                ) { Text(strings.add) }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.hideAddCustomerDialog() }) { Text(if (isBangla) "বাতিল" else "Cancel") }
+                TextButton(onClick = { viewModel.hideAddCustomerDialog() }) { Text(strings.cancel) }
             }
         )
     }
